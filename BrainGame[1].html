@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1b2e"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<title>BrainGame</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Prompt:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: phone-first study arcade. One column, glass panels over a themed aurora.
+   Mitr (rounded Thai display) for numbers + headings, Prompt for reading. */
+@property --p{syntax:'<number>';initial-value:0;inherits:false}
+:root{--a:#14b8a6;--b:#3b82f6;--gold:#ffd166;--ink:#f3f1ff;--mute:#a9a5d1;--glass:rgba(255,255,255,.08);--glass2:rgba(255,255,255,.14);--line:rgba(255,255,255,.14);--g1:#0e7490;--g2:#1d4ed8;--bg:#0b1b2e;--pn:#10243b;--ok:#1fa463;--no:#d64550;--fd:'Mitr','Prompt',sans-serif;--fb:'Prompt','Noto Sans Thai',system-ui,sans-serif}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+[hidden]{display:none!important}
+body{background:var(--bg);font-family:var(--fb);display:flex;justify-content:center;align-items:center;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;color:var(--ink)}
+button{font-family:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#app{width:100%;max-width:480px;height:100vh;height:100dvh;position:relative;overflow:hidden;background:radial-gradient(620px 420px at 90% -8%,var(--g1) 0,transparent 62%),radial-gradient(520px 420px at -12% 104%,var(--g2) 0,transparent 58%),var(--bg);transition:background .4s}
+#app:before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1.4px);background-size:22px 22px;mask-image:linear-gradient(#000,transparent 70%);-webkit-mask-image:linear-gradient(#000,transparent 70%);pointer-events:none}
+@media(min-width:520px){#app{height:min(100dvh,900px);border-radius:34px;border:1px solid var(--line);box-shadow:0 30px 80px #0009}}
+.scr{position:absolute;inset:0;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top,0px) + 14px) 18px calc(env(safe-area-inset-bottom,0px) + 16px);animation:in .35s ease}
+@keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes fl{50%{transform:translateY(-10px)}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:none;opacity:1}}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.top h2{margin:0;font:500 24px var(--fd);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ic{width:42px;height:42px;border-radius:14px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);transition:.15s;padding:0;flex:none}
+.ic:active,.card:active,.btn:active,.opt:active,.row:active{transform:scale(.97)}
+input{user-select:text;-webkit-user-select:text}
+.fld{width:100%;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--glass);color:var(--ink);font:16px var(--fb);margin-bottom:12px;outline:0}
+.sheet{position:absolute;inset:0;z-index:9;display:flex;align-items:flex-end;background:#000b;animation:in .2s}
+.sheet>div{width:100%;max-height:88%;overflow:auto;background:var(--pn);border-radius:28px 28px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom,0px) + 22px);border-top:1px solid var(--line);line-height:1.7;font-size:15px;animation:up .28s cubic-bezier(.2,.8,.2,1)}
+.sheet h3{margin:0 0 10px;font:500 22px var(--fd)}.sheet h4{margin:20px 0 8px;font:500 16px var(--fd);color:var(--gold)}.sheet li{margin-bottom:4px}
+.toast{position:absolute;left:50%;bottom:90px;transform:translateX(-50%);background:#fff;color:#0b1b2e;padding:10px 18px;border-radius:20px;z-index:20;font-weight:600;font-size:14px;animation:pop .3s;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis}
+.sub{color:var(--mute);font-size:13px;margin:-6px 0 14px}
+.btn{border:0;border-radius:16px;padding:14px 22px;font:600 16px var(--fb);color:#fff;cursor:pointer;background:linear-gradient(135deg,var(--a),var(--b));box-shadow:0 8px 20px color-mix(in srgb,var(--a) 35%,transparent);transition:.15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn.g{background:var(--glass);border:1px solid var(--line);box-shadow:none}
+.btn:disabled{opacity:.4;cursor:default}
+.bar{display:flex;gap:10px;margin-top:14px}.bar .btn{flex:1}
+/* home */
+.hi{flex:1;min-width:0;line-height:1.25}.hi small{display:block;color:var(--mute);font-size:12px}.hi b{font:500 19px var(--fd);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stat{display:flex;gap:14px;padding:16px;border-radius:24px;background:linear-gradient(135deg,var(--glass2),var(--glass));border:1px solid var(--line);margin-bottom:18px}
+.stat .l{flex:1;min-width:0}.lvl{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.lv{font:600 15px var(--fd);background:var(--gold);color:#2a1a00;padding:5px 11px;border-radius:12px;white-space:nowrap}
+.lvl b{display:block;font:500 15px var(--fd);line-height:1.2}.lvl small,.mute{color:var(--mute);font-size:12px}
+.xp{height:9px;border-radius:9px;background:#ffffff1c;overflow:hidden;margin-bottom:6px}.xp i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,var(--gold),#fff)}
+.stat .r{display:flex;flex-direction:column;gap:8px;align-items:stretch;justify-content:center;min-width:92px}
+.pill{display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:14px;background:#0003;font:500 14px var(--fd);white-space:nowrap}
+.pill .i{width:18px;height:18px;color:var(--gold)}.pill.f .i{color:#ff8a4c}
+.sec{display:flex;align-items:baseline;justify-content:space-between;margin:0 2px 10px}.sec b{font:500 17px var(--fd)}.sec small{color:var(--mute);font-size:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;overflow:auto;padding-bottom:8px;flex:1;align-content:start}
+.card{border:0;text-align:left;border-radius:24px;padding:16px;min-height:168px;display:flex;flex-direction:column;justify-content:flex-end;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 12px 26px #0006;transition:.15s;color:#fff;text-shadow:0 1px 6px #0004}
+.card .gl{position:absolute;top:2px;right:12px;font:500 64px/1.1 var(--fd);opacity:.95;filter:drop-shadow(0 6px 10px #0004)}
+.card:after{content:"";position:absolute;width:140px;height:140px;border-radius:50%;background:#ffffff1f;right:-40px;top:-40px}
+.card b{font:500 20px var(--fd);position:relative;z-index:1}.card span:not(.gl){font-size:12px;opacity:.9;position:relative;z-index:1}
+.mini{height:6px;border-radius:6px;background:#0004;margin:12px 0 5px;overflow:hidden;position:relative;z-index:1}.mini i{display:block;height:100%;background:#fff;border-radius:6px}
+.card small{font-size:11px;opacity:.9;position:relative;z-index:1}
+/* topics */
+.list{display:flex;flex-direction:column;gap:12px;overflow:auto;flex:1}
+.row{display:flex;align-items:center;gap:14px;padding:14px;border-radius:20px;background:var(--glass);border:1px solid var(--line);cursor:pointer;transition:.15s;width:100%;text-align:left}
+.row .n{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font:500 19px var(--fd);flex:none;color:#fff}
+.row .t{flex:1;min-width:0}.row b{display:block;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row small{color:var(--mute)}
+.badge{font:500 12px var(--fd);padding:4px 10px;border-radius:20px;background:#0003;white-space:nowrap}.badge.ok{background:color-mix(in srgb,var(--ok) 35%,transparent);color:#c9ffe2}
+.read{flex:1;overflow:auto;background:var(--glass);border:1px solid var(--line);border-radius:24px;padding:22px;line-height:1.9;font-size:16px}
+.read h3{margin:0 0 12px;font:500 24px var(--fd)}
+.tag{display:inline-block;font-size:12px;padding:3px 11px;border-radius:12px;color:#fff;margin-bottom:12px;font-weight:600}
+.chips{display:flex;gap:8px;margin-top:12px;align-items:center}.chips small{color:var(--mute);margin-right:4px}
+.ch{border:1px solid var(--line);background:var(--glass);border-radius:14px;padding:7px 14px;font:500 14px var(--fb);cursor:pointer}.ch.on{background:var(--gold);color:#2a1a00;border-color:var(--gold)}
+/* hero / splash */
+.hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.brain{width:132px;height:132px;animation:fl 3.2s ease-in-out infinite;filter:drop-shadow(0 14px 30px color-mix(in srgb,var(--b) 55%,transparent))}
+.logo{font:600 48px var(--fd);background:linear-gradient(135deg,#fff,var(--gold) 60%,var(--b));-webkit-background-clip:text;background-clip:text;color:transparent;margin:12px 0 4px;letter-spacing:.5px}
+.hero p{color:var(--mute);margin:0 0 40px;line-height:1.7}
+.hero .btn{width:100%;font-size:19px;padding:17px}
+.sp{width:60px;height:60px;border-radius:50%;border:5px solid #ffffff22;border-top-color:var(--gold);animation:rt 1s linear infinite;margin-bottom:20px}@keyframes rt{to{transform:rotate(360deg)}}
+.tip{color:var(--mute);margin:10px 0 0;min-height:24px;font-size:14px}
+/* quiz */
+.cnt{font:500 20px var(--fd)}.cnt small{color:var(--mute);font-size:14px}
+.prog{height:8px;border-radius:8px;background:var(--glass);overflow:hidden;margin-bottom:10px}.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--a),var(--b));border-radius:8px;transition:.4s}
+.qmeta{display:flex;gap:8px;align-items:center;margin-bottom:8px;min-height:32px}
+.chip{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:12px;background:var(--glass);border:1px solid var(--line);font:500 14px var(--fd)}.chip .i{width:16px;height:16px;color:var(--gold)}
+.chip.cb{color:#ffb27a;animation:pop .3s}.chip.cb .i{color:#ff8a4c}.chip.tmr{margin-left:auto}.chip.tmr.warn{color:#ff8b94;border-color:#ff8b94;animation:shake .4s infinite}
+.tbar{height:5px;border-radius:5px;background:var(--glass);overflow:hidden;margin-bottom:6px}.tbar i{display:block;height:100%;width:100%;background:var(--gold);border-radius:5px;transition:width .1s linear}
+.qwrap{flex:1;overflow:auto;padding-bottom:6px}
+.qc{background:var(--glass);border:1px solid var(--line);border-radius:24px;padding:24px 20px;font-size:20px;font-weight:600;line-height:1.55;margin:6px 0 16px;text-align:center;animation:pop .35s}
+.opt{display:flex;align-items:center;gap:12px;width:100%;margin-bottom:10px;padding:13px 14px;border-radius:18px;border:1px solid var(--line);background:var(--glass);color:var(--ink);font:500 16px var(--fb);text-align:left;cursor:pointer;transition:.15s}
+.opt i{width:32px;height:32px;border-radius:11px;background:#ffffff1f;display:flex;align-items:center;justify-content:center;font:500 15px var(--fd);flex:none;font-style:normal}
+.opt span{min-width:0;overflow-wrap:anywhere}
+.opt.ok{background:var(--ok);border-color:var(--ok);animation:pop .3s}.opt.no{background:var(--no);border-color:var(--no);animation:shake .35s}.opt.gone{opacity:.18;pointer-events:none}.opt.dim{opacity:.55}
+.fb{flex:1;border-radius:22px;padding:14px 16px;background:var(--pn);border:1px solid var(--line);animation:up .25s}
+.fb.ok{border-color:var(--ok)}.fb.no{border-color:var(--no)}
+.fh{display:flex;align-items:center;gap:8px;font:500 17px var(--fd)}.fb.ok .fh{color:#5ee9a0}.fb.no .fh{color:#ff8b94}
+.fb p{margin:6px 0 12px;font-size:14px;line-height:1.7;color:var(--ink);opacity:.9;max-height:120px;overflow:auto}
+.fb .btn{width:100%}
+/* result */
+.ring{--p:0;width:200px;height:200px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:10px 0 16px;background:conic-gradient(var(--gold) calc(var(--p)*1%),#ffffff1a 0);transition:--p 1.3s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 50px color-mix(in srgb,var(--gold) 25%,transparent)}
+.ring div{width:158px;height:158px;border-radius:50%;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring b{font:600 46px var(--fd);line-height:1.1}.ring small{color:var(--mute)}
+.msg{font:500 26px var(--fd);margin-bottom:14px}
+.kp{display:flex;gap:10px;margin-bottom:16px;width:100%}
+.kp div{flex:1;padding:10px 6px;border-radius:16px;background:var(--glass);border:1px solid var(--line)}.kp b{display:block;font:500 20px var(--fd)}.kp small{color:var(--mute);font-size:11px}
+.up{width:100%;padding:12px;border-radius:16px;background:linear-gradient(135deg,var(--gold),#ff9d4c);color:#2a1a00;font:500 16px var(--fd);margin-bottom:12px;animation:pop .5s}
+.cf{position:absolute;inset:0;pointer-events:none;z-index:8}
+/* sheets & drawer */
+.sw{width:54px;height:54px;border-radius:50%;box-shadow:0 0 0 1px #fff3}
+.tg{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line)}
+.bd{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}.bd.off{opacity:.4}
+.bd .m{width:40px;height:40px;border-radius:13px;background:linear-gradient(135deg,var(--gold),#ff9d4c);color:#2a1a00;display:flex;align-items:center;justify-content:center;flex:none}.bd.off .m{background:var(--glass2);color:var(--ink)}
+.bd small{display:block;color:var(--mute)}
+.rv{padding:12px 0;border-bottom:1px solid var(--line)}.rv b{display:block;margin-bottom:4px}.rv .g{color:#5ee9a0}.rv .w{color:#ff8b94}.rv small{display:block;color:var(--mute);margin-top:4px}
+.ov{position:absolute;inset:0;background:#000a;z-index:5;animation:in .2s}
+.dr{position:absolute;left:0;top:0;bottom:0;width:80%;background:var(--pn);border-right:1px solid var(--line);padding:calc(env(safe-area-inset-top,0px) + 24px) 20px;z-index:6;animation:sl .25s;overflow:auto}
+@keyframes sl{from{transform:translateX(-100%)}}
+.dr .av{width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--b));display:flex;align-items:center;justify-content:center;font:500 30px var(--fd);margin-bottom:10px}
+.dr button.it{display:flex;align-items:center;gap:12px;width:100%;padding:15px 4px;border:0;border-bottom:1px solid var(--line);background:none;font:500 15px var(--fb);cursor:pointer;text-align:left}
+.seg{display:flex;background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:4px;margin:2px 0 16px}.seg button{flex:1;border:0;background:none;padding:11px;border-radius:14px;font:500 15px var(--fb);cursor:pointer;color:var(--mute);transition:.2s}.seg button.on{background:linear-gradient(135deg,var(--a),var(--b));color:#fff;box-shadow:0 6px 16px color-mix(in srgb,var(--a) 35%,transparent)}
+.auh{display:flex;align-items:center;gap:14px;margin:2px 0 16px}.auh b{display:block;font:500 22px var(--fd);line-height:1.2}.auh small{color:var(--mute);font-size:13px;line-height:1.5;display:block;margin-top:3px}.auh svg{flex:none}
+.sb{width:100%;min-height:50px;border-radius:16px;border:1px solid var(--line);background:var(--glass);font:500 15px var(--fb);display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;cursor:pointer;color:var(--ink);transition:.15s}.sb:active{transform:scale(.98)}#sa svg{fill:var(--ink)}
+.or2{display:flex;align-items:center;gap:12px;color:var(--mute);font-size:13px;margin:8px 0 14px}.or2:before,.or2:after{content:"";flex:1;height:1px;background:var(--line)}
+.fl{display:block;margin-bottom:12px}.fl>span{display:block;font-size:12px;color:var(--mute);margin:0 0 6px 4px}
+.inp{position:relative}.inp input{width:100%;height:54px;border-radius:16px;border:1px solid var(--line);background:var(--glass);color:var(--ink);padding:0 50px 0 16px;font:16px var(--fb);outline:0;transition:.15s}.inp input:focus{border-color:var(--a);box-shadow:0 0 0 3px color-mix(in srgb,var(--a) 25%,transparent)}
+.eye{position:absolute;right:5px;top:7px;width:40px;height:40px;border:0;background:none;cursor:pointer;color:var(--mute);display:flex;align-items:center;justify-content:center;border-radius:12px}
+.mt{height:6px;border-radius:6px;background:var(--glass);overflow:hidden;margin:-2px 0 6px}.mt i{display:block;height:100%;width:0;transition:.3s;border-radius:6px}.mtl{font-size:12px;color:var(--mute);margin:0 0 12px 4px}
+.er{color:#ff8b94;font-size:14px;min-height:22px;margin:2px 4px 8px;line-height:1.5}
+.gst{background:none;border:0;color:var(--mute);font:500 14px var(--fb);text-decoration:underline;cursor:pointer;margin:14px auto 0;display:block;padding:6px}
+.tm2{font-size:12px;color:var(--mute);text-align:center;margin-top:8px;line-height:1.7}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body><div id="app"></div>
+<script>
+/* ---------- เนื้อหา ---------- */
+const T={
+thai:{n:'Thai',g:'ก',c:'#9a7b2c',d:'ภาษาไทย',items:[
+['วรรณคดี','พระอภัยมณี ตอน หนีนางผีเสื้อสมุทร เล่าเรื่องราวการหลบหนีของพระอภัยมณีและสินสมุทร โดยได้รับความช่วยเหลือจากครอบครัวเงือก นางผีเสื้อสมุทรออกตามล่าจนพ่อแม่เงือกต้องสละชีวิต เพื่อให้เจ้าชายหนีรอดปลอดภัย'],
+['หลักภาษา','คำในภาษาไทยแบ่งเป็น 7 ชนิด ได้แก่ นาม สรรพนาม กริยา วิเศษณ์ บุพบท สันธาน และอุทาน'],
+['ลักษณะการเขียนจดหมาย','จดหมายมีส่วนประกอบคือ ที่อยู่ผู้เขียน วันที่ คำขึ้นต้น ข้อความ คำลงท้าย และลายมือชื่อ'],
+['Title 1','เนื้อหาตัวอย่างสำหรับหัวข้อที่ 1']],
+q:[['ผู้แต่งเรื่องพระอภัยมณีคือใคร',['สุนทรภู่','เจ้าพระยาพระคลัง','ร.2','ศรีปราชญ์'],0,'สุนทรภู่เป็นกวีเอกสมัยรัตนโกสินทร์ ผู้ประพันธ์พระอภัยมณี'],
+['คำว่า "กิน" เป็นคำชนิดใด',['นาม','กริยา','สันธาน','อุทาน'],1,'"กิน" บอกอาการหรือการกระทำ จึงเป็นกริยา'],
+['คำในภาษาไทยมีกี่ชนิด',['5','6','7','8'],2,'มี 7 ชนิด คือ นาม สรรพนาม กริยา วิเศษณ์ บุพบท สันธาน อุทาน'],
+['คำลงท้ายจดหมายสนิทสนมคือข้อใด',['ด้วยความเคารพอย่างสูง','ขอแสดงความนับถือ','รัก','ขอบพระคุณ'],2,'จดหมายสนิทสนมใช้คำลงท้ายไม่เป็นทางการ เช่น รัก คิดถึง'],
+['สินสมุทรเป็นลูกของใคร',['พระอภัยมณีกับนางผีเสื้อสมุทร','พระอภัยมณีกับนางเงือก','ศรีสุวรรณกับนางเกษรา','สุหรั่งกับนางละเวง'],0,'สินสมุทรเป็นโอรสของพระอภัยมณีกับนางผีเสื้อสมุทร']]},
+english:{n:'English',g:'Aa',c:'#555',d:'English grammar',items:[
+['Tenses','Present simple is used for habits and facts. Past simple is used for finished actions.'],
+['Articles','Use "a" before consonant sounds, "an" before vowel sounds, and "the" for specific things.'],
+['Vocabulary','Build vocabulary through reading, context clues, and regular review.'],
+['Title 1','Sample content for topic 1']],
+q:[['She ___ to school every day.',['go','goes','going','gone'],1,'Present simple with he/she/it adds -s: she goes.'],
+['Choose the correct article: ___ apple',['a','an','the','no article'],1,'"apple" starts with a vowel sound, so we use "an".'],
+['Past simple of "eat"',['eated','ate','eaten','eating'],1,'"eat" is irregular: eat → ate → eaten.'],
+['Opposite of "hot"',['cold','warm','big','soft'],0,'The antonym of hot is cold.'],
+['They ___ football yesterday.',['play','plays','played','playing'],2,'"yesterday" signals past simple, so use played.']]},
+chinese:{n:'Chinese',g:'学',c:'#a11',d:'ภาษาจีน',items:[
+['ทักทาย','你好 (nǐ hǎo) แปลว่า สวัสดี / 谢谢 (xièxie) แปลว่า ขอบคุณ'],
+['ตัวเลข','一 二 三 四 五 = หนึ่ง สอง สาม สี่ ห้า'],
+['ครอบครัว','爸爸 = พ่อ, 妈妈 = แม่'],
+['Title 1','เนื้อหาตัวอย่างหัวข้อที่ 1']],
+q:[['你好 แปลว่าอะไร',['ลาก่อน','สวัสดี','ขอบคุณ','ขอโทษ'],1,'你好 (nǐ hǎo) คือคำทักทาย แปลว่า สวัสดี'],
+['谢谢 แปลว่า',['ขอบคุณ','พ่อ','แม่','สอง'],0,'谢谢 (xièxie) แปลว่า ขอบคุณ'],
+['三 คือเลขอะไร',['1','2','3','4'],2,'一=1 二=2 三=3'],
+['妈妈 แปลว่า',['พ่อ','พี่','แม่','ลุง'],2,'妈妈 (māma) = แม่ ส่วน 爸爸 = พ่อ'],
+['五 คือเลขอะไร',['3','4','5','6'],2,'五 (wǔ) = 5']]},
+science:{n:'Science',g:'H₂O',c:'#357',d:'วิทยาศาสตร์',items:[
+['สสาร','สสารมี 3 สถานะ คือ ของแข็ง ของเหลว และแก๊ส'],
+['เซลล์','เซลล์เป็นหน่วยพื้นฐานของสิ่งมีชีวิต'],
+['พลังงาน','พลังงานไม่สูญหาย แต่เปลี่ยนรูปได้'],
+['Title 1','เนื้อหาตัวอย่างหัวข้อที่ 1']],
+q:[['น้ำแข็งเป็นสสารสถานะใด',['ของแข็ง','ของเหลว','แก๊ส','พลาสมา'],0,'น้ำแข็งคือน้ำในสถานะของแข็ง'],
+['หน่วยพื้นฐานของสิ่งมีชีวิตคือ',['อะตอม','เซลล์','อวัยวะ','เนื้อเยื่อ'],1,'เซลล์เป็นหน่วยเล็กที่สุดที่มีชีวิตและทำหน้าที่ได้'],
+['แก๊สที่พืชใช้สังเคราะห์แสง',['O2','N2','CO2','H2'],2,'พืชใช้ CO2 กับน้ำและแสง สร้างน้ำตาลและปล่อย O2'],
+['สูตรเคมีของน้ำ',['CO2','H2O','NaCl','O2'],1,'น้ำประกอบด้วยไฮโดรเจน 2 อะตอม ออกซิเจน 1 อะตอม'],
+['ดวงอาทิตย์ให้พลังงานในรูปใดเป็นหลัก',['แสงและความร้อน','เสียง','แม่เหล็ก','ไฟฟ้าสถิต'],0,'ดวงอาทิตย์แผ่พลังงานออกมาเป็นแสงและความร้อน']]}};
+const BANK={};/*BANK_START*/
+BANK.thai=[
+/* 0 วรรณคดี: พระอภัยมณี */
+[0,'ผู้แต่งเรื่องพระอภัยมณีคือใคร',['สุนทรภู่','ศรีปราชญ์','เจ้าพระยาพระคลัง (หน)','พระมหาราชครู'],0,'สุนทรภู่เป็นกวีเอกสมัยรัตนโกสินทร์ ผู้แต่งพระอภัยมณี'],
+[0,'พระอภัยมณีจัดเป็นวรรณคดีประเภทใด',['นิทานคำกลอน','บทละคร','ลิลิต','โคลงนิราศ'],0,'พระอภัยมณีแต่งเป็นกลอนเล่าเรื่องผจญภัย จึงเรียกว่านิทานคำกลอน'],
+[0,'คำประพันธ์ที่ใช้แต่งพระอภัยมณีคือข้อใด',['กลอนสุภาพ','โคลงสี่สุภาพ','กาพย์ยานี 11','อินทรวิเชียรฉันท์'],0,'สุนทรภู่ใช้กลอนสุภาพ (กลอนแปด) ในการแต่ง'],
+[0,'พระอภัยมณีมีความสามารถพิเศษด้านใด',['เป่าปี่','ฟันดาบ','ร่ายมนตร์','ขี่ม้า'],0,'พระอภัยมณีเรียนวิชาเป่าปี่ ซึ่งเป็นอาวุธสำคัญของเรื่อง'],
+[0,'เสียงปี่ของพระอภัยมณีทำให้ผู้ฟังเป็นอย่างไร',['หลับใหล','โกรธเกรี้ยว','หัวเราะ','เป็นอัมพาต'],0,'ผู้ที่ได้ยินเสียงปี่จะเคลิ้มและหลับใหล'],
+[0,'นางผีเสื้อสมุทรในเรื่องเป็นตัวละครประเภทใด',['ยักษ์','เงือก','มนุษย์','เทวดา'],0,'นางผีเสื้อสมุทรเป็นนางยักษ์ที่หลงรักพระอภัยมณี'],
+[0,'สินสมุทรเป็นลูกของใคร',['พระอภัยมณีกับนางผีเสื้อสมุทร','พระอภัยมณีกับนางเงือก','ศรีสุวรรณกับนางเกษรา','สุดสาครกับนางเสาวคนธ์'],0,'สินสมุทรเป็นโอรสของพระอภัยมณีกับนางผีเสื้อสมุทร จึงมีพละกำลังมาก'],
+[0,'สุดสาครเป็นลูกของพระอภัยมณีกับใคร',['นางเงือก','นางผีเสื้อสมุทร','นางละเวง','นางสุวรรณมาลี'],0,'สุดสาครเป็นโอรสของพระอภัยมณีกับนางเงือก'],
+[0,'ใครคือผู้ช่วยพระอภัยมณีและสินสมุทรหนีนางผีเสื้อสมุทรในตอนนี้',['ครอบครัวเงือก','ฤๅษี','พราน','ทหารเมืองรัตนา'],0,'ครอบครัวเงือกพาสองพ่อลูกหนีออกจากเกาะ'],
+[0,'เหตุใดพ่อแม่เงือกจึงสละชีวิตในตอนนี้',['เพื่อให้เจ้าชายหนีรอด','เพื่อแก้แค้น','เพื่อชิงบัลลังก์','เพราะถูกสาป'],0,'เมื่อนางผีเสื้อตามมา พ่อแม่เงือกยอมเสียสละเพื่อให้เจ้าชายปลอดภัย'],
+[0,'เงือกในเรื่องมีรูปร่างลักษณะอย่างไร',['ครึ่งคนครึ่งปลา','ครึ่งคนครึ่งม้า','ครึ่งคนครึ่งนก','ครึ่งคนครึ่งงู'],0,'เงือกเป็นสิ่งมีชีวิตในจินตนาการ มีร่างกายท่อนบนเป็นคน ท่อนล่างเป็นปลา'],
+[0,'ศรีสุวรรณมีความสัมพันธ์กับพระอภัยมณีอย่างไร',['น้องชาย','พี่ชาย','ลูกชาย','เพื่อนสนิท'],0,'ศรีสุวรรณเป็นน้องชายของพระอภัยมณี'],
+[0,'พระอภัยมณีเป็นเจ้าชายแห่งเมืองใด',['เมืองรัตนา','เมืองผลึก','เมืองลงกา','เมืองการะเวก'],0,'พระอภัยมณีเป็นโอรสของท้าวสุทัศน์แห่งเมืองรัตนา'],
+[0,'ข้อคิดสำคัญจากตอนหนีนางผีเสื้อสมุทรคือข้อใด',['ความรักและการเสียสละของครอบครัว','การแก้แค้นต้องทำให้ถึงที่สุด','ความร่ำรวยสำคัญที่สุด','อย่าไว้ใจผู้อื่นเลย'],0,'ตอนนี้เน้นความรักและการเสียสละของพ่อแม่เงือกเพื่อผู้อื่น'],
+[0,'สุนทรภู่ได้รับยกย่องจากยูเนสโกเป็นบุคคลสำคัญของโลกด้านใด',['ด้านวรรณกรรม','ด้านดนตรี','ด้านสถาปัตยกรรม','ด้านภาพวาด'],0,'ยูเนสโกยกย่องสุนทรภู่เป็นกวีเอกของโลกเมื่อ พ.ศ. 2529'],
+[0,'วันสุนทรภู่ตรงกับวันที่เท่าใด',['26 มิถุนายน','12 สิงหาคม','5 ธันวาคม','13 เมษายน'],0,'วันสุนทรภู่คือวันที่ 26 มิถุนายน ซึ่งเป็นวันเกิดของท่าน'],
+[0,'สุนทรภู่เกิดในสมัยรัชกาลใด',['รัชกาลที่ 1','รัชกาลที่ 3','รัชกาลที่ 5','รัชกาลที่ 9'],0,'สุนทรภู่เกิด พ.ศ. 2329 ในสมัยรัชกาลที่ 1'],
+[0,'สุนทรภู่เคยรับราชการเป็นอาลักษณ์ในสมัยรัชกาลใด',['รัชกาลที่ 2','รัชกาลที่ 4','รัชกาลที่ 6','รัชกาลที่ 8'],0,'สุนทรภู่ได้รับราชการเป็นอาลักษณ์ในรัชกาลที่ 2'],
+[0,'คำว่า "ผจญภัย" ในเรื่องพระอภัยมณีหมายถึงข้อใด',['เผชิญอันตรายและเรื่องราวต่าง ๆ','พักผ่อนอยู่กับบ้าน','เรียนวิชา','ทำการค้า'],0,'ผจญภัยคือการเผชิญเหตุการณ์อันตรายที่ท้าทาย'],
+[0,'การที่ผู้แต่งสร้างตัวละครเงือกและยักษ์สะท้อนลักษณะใดของเรื่อง',['เรื่องแต่งที่เต็มไปด้วยจินตนาการ','เรื่องจริงทางประวัติศาสตร์','ตำราวิทยาศาสตร์','บันทึกการเดินทาง'],0,'ตัวละครเหนือจริงแสดงว่าเป็นนิทานที่ใช้จินตนาการสูง'],
+/* 1 หลักภาษา: ชนิดของคำ */
+[1,'คำในภาษาไทยแบ่งเป็นกี่ชนิด',['5','6','7','8'],2,'มี 7 ชนิด คือ นาม สรรพนาม กริยา วิเศษณ์ บุพบท สันธาน อุทาน'],
+[1,'"แมว" เป็นคำชนิดใด',['นาม','กริยา','วิเศษณ์','สันธาน'],0,'นามคือคำที่ใช้เรียกชื่อคน สัตว์ สิ่งของ สถานที่'],
+[1,'"เขา" ในประโยค "เขาไปโรงเรียน" เป็นคำชนิดใด',['สรรพนาม','นาม','กริยา','บุพบท'],0,'สรรพนามใช้แทนนามที่กล่าวถึงแล้ว เช่น ฉัน เธอ เขา'],
+[1,'"วิ่ง" เป็นคำชนิดใด',['กริยา','นาม','สรรพนาม','อุทาน'],0,'กริยาคือคำที่แสดงอาการหรือการกระทำ'],
+[1,'"สวย" ในประโยค "ดอกไม้สวย" เป็นคำชนิดใด',['วิเศษณ์','นาม','สันธาน','บุพบท'],0,'วิเศษณ์ทำหน้าที่ขยายนาม กริยา หรือวิเศษณ์ด้วยกัน'],
+[1,'"บน" ในประโยค "หนังสืออยู่บนโต๊ะ" เป็นคำชนิดใด',['บุพบท','สันธาน','กริยา','อุทาน'],0,'บุพบทนำหน้านามเพื่อบอกความสัมพันธ์ เช่น ใน บน ที่ แก่'],
+[1,'"และ" ทำหน้าที่เป็นคำชนิดใด',['สันธาน','บุพบท','สรรพนาม','นาม'],0,'สันธานเชื่อมคำ ข้อความ หรือประโยค เช่น และ แต่ หรือ เพราะ'],
+[1,'"โอ๊ย" เป็นคำชนิดใด',['อุทาน','สันธาน','วิเศษณ์','บุพบท'],0,'อุทานเป็นคำที่เปล่งออกมาแสดงอารมณ์ความรู้สึก'],
+[1,'คำชนิดใดทำหน้าที่แทนนามที่กล่าวถึงแล้ว',['สรรพนาม','บุพบท','อุทาน','สันธาน'],0,'สรรพนามช่วยไม่ต้องกล่าวซ้ำนามเดิม'],
+[1,'คำชนิดใดทำหน้าที่เชื่อมคำหรือประโยคให้ต่อเนื่องกัน',['สันธาน','วิเศษณ์','นาม','กริยา'],0,'สันธานเป็นคำเชื่อม'],
+[1,'คำชนิดใดทำหน้าที่ขยายนามหรือกริยา',['วิเศษณ์','สรรพนาม','อุทาน','บุพบท'],0,'วิเศษณ์เพิ่มรายละเอียดให้คำอื่น'],
+[1,'คำชนิดใดมักไม่ทำหน้าที่ต่อเนื่องกับประโยค แต่แสดงอารมณ์',['อุทาน','นาม','กริยา','วิเศษณ์'],0,'อุทานแสดงความรู้สึก เช่น ว้าย โอ้โฮ อ๋อ'],
+[1,'"เธอร้องเพลงเพราะ" คำว่า "เพราะ" เป็นคำชนิดใด',['วิเศษณ์','นาม','สรรพนาม','อุทาน'],0,'"เพราะ" ในประโยคนี้ขยายกริยา "ร้อง" จึงเป็นวิเศษณ์'],
+[1,'ข้อใดเป็นบุพบทในประโยค "นักเรียนอ่านหนังสือในห้องสมุด"',['ใน','นักเรียน','อ่าน','หนังสือ'],0,'"ใน" บอกสถานที่ จึงเป็นบุพบท'],
+[1,'"ต้นไม้" เป็นคำชนิดใด',['นาม','กริยา','สันธาน','วิเศษณ์'],0,'ต้นไม้เป็นชื่อสิ่งของ จึงเป็นนาม'],
+[1,'"ฉันไม่ไป เพราะฝนตก" คำว่า "เพราะ" ทำหน้าที่ใด',['เชื่อมประโยคบอกเหตุผล','แทนชื่อคน','แสดงการกระทำ','แสดงอารมณ์'],0,'"เพราะ" เป็นสันธานเชื่อมประโยคบอกเหตุ'],
+[1,'"ท่าน" ในประโยค "ท่านมาแล้ว" เป็นคำชนิดใด',['สรรพนาม','นาม','อุทาน','บุพบท'],0,'"ท่าน" ใช้แทนบุคคลที่พูดถึงหรือพูดด้วย'],
+[1,'"ว้าย" ในประโยค "ว้าย! แมลงสาบ" เป็นคำชนิดใด',['อุทาน','กริยา','นาม','สันธาน'],0,'เป็นเสียงอุทานแสดงความตกใจ'],
+[1,'"นอน" ในประโยค "แมวนอนหลับ" เป็นคำชนิดใด',['กริยา','นาม','วิเศษณ์','บุพบท'],0,'"นอน" แสดงอาการ จึงเป็นกริยา'],
+[1,'"ความดี" เป็นคำชนิดใด',['นาม','กริยา','อุทาน','สรรพนาม'],0,'คำที่ขึ้นต้นด้วย ความ- ส่วนมากเป็นนามธรรม จัดเป็นนาม'],
+/* 2 การเขียนจดหมาย */
+[2,'จดหมายมีส่วนประกอบหลักกี่ส่วน',['4','5','6','7'],2,'ที่อยู่ผู้เขียน วันที่ คำขึ้นต้น ข้อความ คำลงท้าย และลายมือชื่อ รวม 6 ส่วน'],
+[2,'ที่อยู่ผู้เขียนจดหมายควรอยู่ตำแหน่งใด',['มุมบนขวา','มุมล่างซ้าย','กลางหน้ากระดาษ','มุมล่างขวา'],0,'ที่อยู่ผู้เขียนเขียนไว้ด้านบนขวาของกระดาษ'],
+[2,'วันที่ในจดหมายเขียนไว้ตรงใด',['ใต้ที่อยู่ผู้เขียน','หลังลายมือชื่อ','ก่อนคำลงท้าย','ท้ายสุดของหน้า'],0,'วันที่เขียนต่อจากที่อยู่ผู้เขียน'],
+[2,'ข้อใดเป็นคำขึ้นต้นจดหมายถึงผู้ใหญ่ที่เป็นทางการ',['เรียน','ถึง','หวัดดี','เพื่อน'],0,'ใช้ "เรียน" กับผู้ใหญ่หรือผู้ที่ควรให้ความเคารพ'],
+[2,'ข้อใดเป็นคำลงท้ายสำหรับจดหมายถึงเพื่อนสนิท',['รัก','ขอแสดงความนับถือ','ด้วยความเคารพอย่างสูง','ขอบพระคุณยิ่ง'],0,'จดหมายสนิทสนมใช้คำลงท้ายแบบกันเอง เช่น รัก คิดถึง'],
+[2,'"ขอแสดงความนับถือ" ใช้กับจดหมายประเภทใด',['จดหมายกิจธุระ','จดหมายเพื่อนสนิท','จดหมายถึงน้อง','จดหมายล้อเล่น'],0,'ใช้ในจดหมายที่เป็นทางการ หรือติดต่อกับผู้ที่ไม่สนิท'],
+[2,'จดหมายสมัครงานจัดเป็นจดหมายประเภทใด',['จดหมายกิจธุระ','จดหมายส่วนตัว','จดหมายเพื่อน','จดหมายข่าว'],0,'เป็นจดหมายที่ติดต่อเรื่องงาน จึงเป็นจดหมายกิจธุระ'],
+[2,'ส่วนที่เป็นเนื้อหาสำคัญของจดหมายคือส่วนใด',['ข้อความ','วันที่','ที่อยู่ผู้เขียน','ลายมือชื่อ'],0,'ส่วนข้อความเป็นสาระที่ผู้เขียนต้องการสื่อ'],
+[2,'ลายมือชื่อควรเขียนไว้ที่ใด',['ท้ายจดหมายต่อจากคำลงท้าย','บนสุดของกระดาษ','ก่อนคำขึ้นต้น','หลังซองจดหมาย'],0,'ลงชื่อใต้คำลงท้ายเพื่อบอกว่าใครเป็นผู้เขียน'],
+[2,'ภาษาที่ใช้ในจดหมายกิจธุระควรเป็นแบบใด',['สุภาพ กระชับ ชัดเจน','คำแสลงสนุก ๆ','คำหยาบคาย','ภาษาพูดล้วน'],0,'จดหมายกิจธุระต้องสุภาพและตรงประเด็น'],
+[2,'รหัสไปรษณีย์ของไทยมีกี่หลัก',['3','4','5','6'],2,'รหัสไปรษณีย์ไทยมี 5 หลัก'],
+[2,'ข้อมูลที่ต้องมีบนหน้าซองจดหมายคืออะไร',['ชื่อและที่อยู่ผู้รับ','เฉพาะชื่อผู้เขียน','เฉพาะวันที่','เนื้อหาจดหมาย'],0,'ต้องระบุชื่อ ที่อยู่ และรหัสไปรษณีย์ผู้รับ เพื่อให้ส่งถึงถูกคน'],
+[2,'จดหมายขอบคุณควรมีเนื้อหาอย่างไร',['กล่าวขอบคุณและบอกเหตุผล','ตำหนิผู้รับ','โฆษณาสินค้า','ขอเงินยืม'],0,'ควรบอกว่าขอบคุณเรื่องใดและรู้สึกอย่างไร'],
+[2,'ข้อใดเป็นคำลงท้ายจดหมายถึงผู้ใหญ่ที่เคารพมาก',['ด้วยความเคารพอย่างสูง','รัก','เพื่อนรัก','บ๊ายบาย'],0,'ใช้กับผู้ใหญ่ที่เราเคารพมาก เช่น ครู ผู้อำนวยการ'],
+[2,'จดหมายที่เขียนถึงเพื่อนหรือญาติสนิทจัดเป็นจดหมายประเภทใด',['จดหมายส่วนตัว','จดหมายราชการ','จดหมายธุรกิจ','จดหมายเวียน'],0,'เป็นจดหมายส่วนตัวหรือจดหมายสนิทสนม'],
+[2,'ก่อนส่งจดหมายควรทำสิ่งใด',['ตรวจการสะกดและข้อความ','ใส่ภาพการ์ตูนทุกบรรทัด','ลบชื่อตัวเอง','เขียนซ้ำสิบรอบ'],0,'การตรวจทานช่วยให้จดหมายถูกต้องและสุภาพ'],
+[2,'ส่วนใดอยู่ต่อจากคำขึ้นต้นของจดหมาย',['ข้อความ','ลายมือชื่อ','วันที่','ที่อยู่ผู้เขียน'],0,'ลำดับ: ที่อยู่ → วันที่ → คำขึ้นต้น → ข้อความ → คำลงท้าย → ลายมือชื่อ'],
+[2,'ส่วนใดอยู่ก่อนลายมือชื่อ',['คำลงท้าย','คำขึ้นต้น','วันที่','ที่อยู่ผู้เขียน'],0,'คำลงท้ายอยู่ก่อนลายมือชื่อเสมอ'],
+[2,'เหตุใดจึงต้องเขียนที่อยู่ผู้เขียนในจดหมาย',['ให้ผู้รับตอบกลับได้','เพื่อความสวยงาม','เพื่อให้ยาวขึ้น','ไม่มีเหตุผล'],0,'ผู้รับจะได้ทราบที่อยู่เพื่อตอบกลับ'],
+[2,'ข้อใดเป็นคำขึ้นต้นที่เหมาะกับจดหมายถึงเพื่อนสนิท',['ถึง เพื่อนรัก','กราบเรียน','ขอเรียนมายัง','เรียน ท่านผู้อำนวยการ'],0,'จดหมายสนิทสนมใช้คำขึ้นต้นแบบกันเอง']
+];
+BANK.english=[
+/* 0 Tenses */
+[0,'She ___ to school every day.',['goes','go','going','went'],0,'Present simple with she/he/it adds -s: she goes.'],
+[0,'They ___ football yesterday.',['played','play','plays','playing'],0,'"yesterday" signals past simple: played.'],
+[0,'Water ___ at 100 degrees Celsius.',['boils','boil','boiled','boiling'],0,'Facts use present simple: water boils.'],
+[0,'I ___ breakfast at 7 a.m. every morning.',['eat','ate','eaten','eating'],0,'A daily habit uses present simple: I eat.'],
+[0,'He ___ his homework last night.',['finished','finishes','finish','finishing'],0,'"last night" needs past simple: finished.'],
+[0,'Past simple of "go" is ___.',['went','goed','gone','going'],0,'go → went → gone.'],
+[0,'Past simple of "eat" is ___.',['ate','eated','eaten','eats'],0,'eat → ate → eaten.'],
+[0,'Past simple of "have" is ___.',['had','haved','has','having'],0,'have → had → had.'],
+[0,'My mother ___ in a bank.',['works','work','worked','working'],0,'A present job or routine uses present simple: works.'],
+[0,'We ___ to the beach last Sunday.',['went','go','goes','going'],0,'"last Sunday" signals past simple: went.'],
+[0,'Which sentence is in present simple?',['The sun rises in the east.','I visited Chiang Mai.','She was happy.','They will come.'],0,'"rises" states a fact in present simple.'],
+[0,'Which sentence is in past simple?',['She watched TV last night.','She watches TV every day.','She is watching TV.','She will watch TV.'],0,'"watched" with "last night" is past simple.'],
+[0,'He ___ not like spicy food.',['does','do','did','is'],0,'Negative present simple with he uses does not.'],
+[0,'___ you play the guitar?',['Do','Does','Is','Are'],0,'Questions with you in present simple start with Do.'],
+[0,'___ she speak English?',['Does','Do','Is','Are'],0,'With she, use Does + base verb.'],
+[0,'Past simple of "write" is ___.',['wrote','writed','written','writes'],0,'write → wrote → written.'],
+[0,'Which word often goes with present simple?',['usually','yesterday','ago','last week'],0,'"usually" shows a habit: present simple.'],
+[0,'Which word often goes with past simple?',['ago','always','every day','usually'],0,'"two days ago" is a finished time: past simple.'],
+[0,'The train ___ at 9 p.m. every night.',['leaves','leave','left','leaving'],0,'A regular schedule uses present simple: leaves.'],
+[0,'She ___ a letter to her friend yesterday.',['wrote','writes','write','writing'],0,'"yesterday" needs past simple: wrote.'],
+/* 1 Articles */
+[1,'Choose the correct article: ___ apple',['an','a','the','no article'],0,'"apple" starts with a vowel sound, so use an.'],
+[1,'Choose the correct article: ___ book',['a','an','x','no article'],0,'"book" starts with a consonant sound, so use a.'],
+[1,'Choose the correct article: ___ umbrella',['an','a','the','x'],0,'"umbrella" starts with a vowel sound /ʌ/, so use an.'],
+[1,'Choose the correct article: ___ hour',['an','a','x','no article'],0,'"hour" starts with a vowel sound (silent h), so use an.'],
+[1,'Choose the correct article: ___ university',['a','an','x','no article'],0,'"university" starts with the consonant sound /j/, so use a.'],
+[1,'I saw ___ elephant at the zoo.',['an','a','the','x'],0,'"elephant" begins with a vowel sound: an elephant.'],
+[1,'She is ___ English teacher.',['an','a','the','x'],0,'"English" starts with a vowel sound, so use an.'],
+[1,'___ sun rises in the east.',['The','A','An','x'],0,'There is only one sun, so use the.'],
+[1,'Please close ___ door.',['the','a','an','x'],0,'We mean a specific door both people know, so use the.'],
+[1,'I have ___ cat. ___ cat is black.',['a / The','the / A','an / The','a / A'],0,'First mention uses a; second mention of the same cat uses the.'],
+[1,'He plays ___ piano very well.',['the','a','an','x'],0,'Use the with musical instruments: play the piano.'],
+[1,'My brother is ___ doctor.',['a','an','the','x'],0,'A job uses a/an; "doctor" starts with a consonant sound: a.'],
+[1,'My sister is ___ engineer.',['an','a','the','x'],0,'"engineer" starts with a vowel sound: an.'],
+[1,'We use "a" before ___ sounds.',['consonant','vowel','silent','plural'],0,'a goes before consonant sounds, an before vowel sounds.'],
+[1,'We use "an" before ___ sounds.',['vowel','consonant','long','plural'],0,'an goes before vowel sounds.'],
+[1,'I want ___ orange.',['an','a','the','x'],0,'"orange" starts with a vowel sound: an orange.'],
+[1,'We use "the" for things that are ___.',['specific or already known','always plural','always new','unknown to everyone'],0,'"the" points to a specific, known thing.'],
+[1,'Which sentence is correct?',['I eat an egg every day.','I eat a egg every day.','I eat the egg every day for first time.','I eat egg an every day.'],0,'"egg" starts with a vowel sound: an egg.'],
+[1,'Which sentence is correct?',['She has a new bike.','She has an new bike.','She has the new a bike.','She has new an bike.'],0,'The article goes before the adjective, and "new" starts with a consonant sound: a new bike.'],
+[1,'___ Moon goes around the Earth.',['The','A','An','x'],0,'The Moon is unique, so use the.'],
+/* 2 Vocabulary */
+[2,'Opposite of "hot"',['cold','warm','big','soft'],0,'cold is the antonym of hot.'],
+[2,'Opposite of "big"',['small','tall','long','heavy'],0,'small is the antonym of big.'],
+[2,'Opposite of "happy"',['sad','glad','angry','tired'],0,'sad is the antonym of happy.'],
+[2,'Synonym of "begin"',['start','finish','stop','end'],0,'begin and start mean the same.'],
+[2,'Synonym of "big"',['large','tiny','thin','short'],0,'big and large are synonyms.'],
+[2,'Synonym of "quick"',['fast','slow','late','weak'],0,'quick and fast are synonyms.'],
+[2,'Opposite of "early"',['late','soon','fast','first'],0,'late is the antonym of early.'],
+[2,'Opposite of "easy"',['difficult','simple','light','clean'],0,'difficult is the antonym of easy.'],
+[2,'Which word means "a place where we borrow books"?',['library','kitchen','market','hospital'],0,'We borrow books at a library.'],
+[2,'Which word means "a person who teaches students"?',['teacher','farmer','driver','nurse'],0,'A teacher teaches students.'],
+[2,'The weather is very hot. We need an ___.',['a blanket','an air conditioner','a heater','a scarf'],1,'An air conditioner cools a hot room.'],
+[2,'She is very ___. She never gets angry.',['patient','noisy','careless','lazy'],0,'patient means able to stay calm and wait.'],
+[2,'Which word is a fruit?',['mango','carrot','rice','bread'],0,'A mango is a fruit.'],
+[2,'Which word is a vegetable?',['carrot','banana','apple','grape'],0,'A carrot is a vegetable.'],
+[2,'"Context clues" help you to ___.',['guess the meaning of new words','memorize grammar tables','write faster','spell without thinking'],0,'Words around an unknown word give hints to its meaning.'],
+[2,'What is the plural of "child"?',['children','childs','childes','childen'],0,'child → children is an irregular plural.'],
+[2,'What is the plural of "foot"?',['feet','foots','feets','footes'],0,'foot → feet is an irregular plural.'],
+[2,'Which word means "very cold weather"?',['freezing','boiling','sunny','dry'],0,'freezing means extremely cold.'],
+[2,'Which word is a synonym of "smart"?',['clever','silly','slow','rude'],0,'smart and clever both describe intelligence.'],
+[2,'The best way to learn new vocabulary is to ___.',['read often and review regularly','read once only','avoid practice','copy without reading'],0,'Regular reading and review help words stay in memory.']
+];
+BANK.chinese=[
+/* 0 ทักทาย */
+[0,'你好 (nǐ hǎo) แปลว่าอะไร',['สวัสดี','ลาก่อน','ขอบคุณ','ขอโทษ'],0,'你好 คือคำทักทายพื้นฐาน แปลว่า สวัสดี'],
+[0,'谢谢 (xièxie) แปลว่าอะไร',['ขอบคุณ','สวัสดี','ขอโทษ','ลาก่อน'],0,'谢谢 แปลว่า ขอบคุณ'],
+[0,'再见 (zàijiàn) แปลว่าอะไร',['ลาก่อน','สวัสดี','ขอบคุณ','ไม่เป็นไร'],0,'再见 แปลว่า แล้วพบกันใหม่ / ลาก่อน'],
+[0,'对不起 (duìbuqǐ) แปลว่าอะไร',['ขอโทษ','ขอบคุณ','ยินดีต้อนรับ','ไม่เป็นไร'],0,'对不起 ใช้เมื่อต้องการขอโทษ'],
+[0,'没关系 (méi guānxi) แปลว่าอะไร',['ไม่เป็นไร','ขอบคุณ','สวัสดี','ขอโทษ'],0,'没关系 ใช้ตอบรับคำขอโทษ แปลว่า ไม่เป็นไร'],
+[0,'不客气 (bú kèqi) ใช้ตอบเมื่อได้ยินคำว่าอะไร',['谢谢','再见','对不起','你好'],0,'不客气 แปลว่า ไม่ต้องเกรงใจ ใช้ตอบ 谢谢'],
+[0,'早上好 (zǎoshang hǎo) แปลว่าอะไร',['อรุณสวัสดิ์','ราตรีสวัสดิ์','สวัสดีตอนบ่าย','ลาก่อน'],0,'早上 = ตอนเช้า, 好 = ดี'],
+[0,'晚安 (wǎn ān) แปลว่าอะไร',['ราตรีสวัสดิ์','อรุณสวัสดิ์','ขอบคุณ','สวัสดี'],0,'晚安 ใช้กล่าวก่อนนอน'],
+[0,'我叫… (wǒ jiào …) ใช้ในสถานการณ์ใด',['แนะนำชื่อตัวเอง','ขอบคุณ','ลาจาก','ถามทาง'],0,'我叫 แปลว่า ฉันชื่อ'],
+[0,'你好吗 (nǐ hǎo ma) แปลว่าอะไร',['คุณสบายดีไหม','คุณชื่ออะไร','คุณมาจากไหน','คุณอายุเท่าไร'],0,'吗 เป็นคำท้ายประโยคคำถาม'],
+[0,'我很好 (wǒ hěn hǎo) แปลว่าอะไร',['ฉันสบายดี','ฉันหิว','ฉันเหนื่อย','ฉันไม่ว่าง'],0,'很 = มาก, 好 = ดี'],
+[0,'谢谢 อ่านออกเสียงพินอินว่าอะไร',['xièxie','nǐ hǎo','zàijiàn','duìbuqǐ'],0,'谢谢 อ่านว่า xièxie'],
+[0,'你 (nǐ) แปลว่าอะไร',['คุณ / เธอ','ฉัน','เขา','พวกเรา'],0,'你 คือสรรพนามบุรุษที่ 2'],
+[0,'我 (wǒ) แปลว่าอะไร',['ฉัน','คุณ','เขา','พวกเขา'],0,'我 คือสรรพนามบุรุษที่ 1'],
+[0,'他 (tā) แปลว่าอะไร',['เขา (ผู้ชาย)','ฉัน','คุณ','พวกเรา'],0,'他 แปลว่า เขา (ชาย) ส่วน 她 คือ เธอ (หญิง)'],
+[0,'好 (hǎo) แปลว่าอะไร',['ดี','เลว','ใหญ่','เล็ก'],0,'好 แปลว่า ดี'],
+[0,'欢迎 (huānyíng) แปลว่าอะไร',['ยินดีต้อนรับ','ลาก่อน','ขอบคุณ','ขอโทษ'],0,'欢迎 ใช้ต้อนรับแขก'],
+[0,'คำใดใช้กล่าวลาจาก',['再见','你好','谢谢','欢迎'],0,'再见 คือคำลา'],
+[0,'คำใดใช้กล่าวขอบคุณ',['谢谢','对不起','再见','没关系'],0,'谢谢 คือขอบคุณ'],
+[0,'คำใดใช้กล่าวขอโทษ',['对不起','谢谢','你好','再见'],0,'对不起 คือขอโทษ'],
+/* 1 ตัวเลข */
+[1,'一 คือเลขอะไร',['1','2','3','4'],0,'一 (yī) = 1'],
+[1,'二 คือเลขอะไร',['2','1','3','5'],0,'二 (èr) = 2'],
+[1,'三 คือเลขอะไร',['3','2','4','5'],0,'三 (sān) = 3'],
+[1,'四 คือเลขอะไร',['4','3','5','6'],0,'四 (sì) = 4'],
+[1,'五 คือเลขอะไร',['5','4','6','7'],0,'五 (wǔ) = 5'],
+[1,'六 (liù) คือเลขอะไร',['6','5','7','8'],0,'六 = 6'],
+[1,'七 (qī) คือเลขอะไร',['7','6','8','9'],0,'七 = 7'],
+[1,'八 (bā) คือเลขอะไร',['8','7','9','6'],0,'八 = 8'],
+[1,'九 (jiǔ) คือเลขอะไร',['9','8','7','10'],0,'九 = 9'],
+[1,'十 (shí) คือเลขอะไร',['10','9','11','100'],0,'十 = 10'],
+[1,'เลข 3 เขียนเป็นตัวจีนว่าอะไร',['三','二','五','七'],0,'3 = 三'],
+[1,'เลข 5 เขียนเป็นตัวจีนว่าอะไร',['五','四','六','八'],0,'5 = 五'],
+[1,'เลข 8 เขียนเป็นตัวจีนว่าอะไร',['八','七','九','六'],0,'8 = 八'],
+[1,'เลข 10 เขียนเป็นตัวจีนว่าอะไร',['十','九','一','五'],0,'10 = 十'],
+[1,'二 + 三 = ?',['五','四','六','七'],0,'2 + 3 = 5 คือ 五'],
+[1,'四 + 四 = ?',['八','六','七','九'],0,'4 + 4 = 8 คือ 八'],
+[1,'六 − 一 = ?',['五','四','三','七'],0,'6 − 1 = 5 คือ 五'],
+[1,'ตัวเลขใดอ่านว่า "sì"',['四','十','八','九'],0,'四 อ่านว่า sì'],
+[1,'ตัวเลขใดอ่านว่า "wǔ"',['五','三','七','九'],0,'五 อ่านว่า wǔ'],
+[1,'ตัวเลขใดมากที่สุด',['九','三','五','七'],0,'九 = 9 มากที่สุดในตัวเลือก'],
+/* 2 ครอบครัว */
+[2,'爸爸 (bàba) แปลว่าอะไร',['พ่อ','แม่','พี่ชาย','น้องสาว'],0,'爸爸 = พ่อ'],
+[2,'妈妈 (māma) แปลว่าอะไร',['แม่','พ่อ','ลุง','ยาย'],0,'妈妈 = แม่'],
+[2,'哥哥 (gēge) แปลว่าอะไร',['พี่ชาย','น้องชาย','พี่สาว','ลุง'],0,'哥哥 = พี่ชาย'],
+[2,'姐姐 (jiějie) แปลว่าอะไร',['พี่สาว','น้องสาว','แม่','ป้า'],0,'姐姐 = พี่สาว'],
+[2,'弟弟 (dìdi) แปลว่าอะไร',['น้องชาย','พี่ชาย','ลูกชาย','เพื่อน'],0,'弟弟 = น้องชาย'],
+[2,'妹妹 (mèimei) แปลว่าอะไร',['น้องสาว','พี่สาว','แม่','ยาย'],0,'妹妹 = น้องสาว'],
+[2,'爷爷 (yéye) แปลว่าอะไร',['ปู่','ตา','พ่อ','ลุง'],0,'爷爷 = ปู่ (พ่อของพ่อ)'],
+[2,'奶奶 (nǎinai) แปลว่าอะไร',['ย่า','ยาย','แม่','ป้า'],0,'奶奶 = ย่า (แม่ของพ่อ)'],
+[2,'ตัวจีนใดแปลว่า พ่อ',['爸爸','妈妈','哥哥','妹妹'],0,'爸爸 = พ่อ'],
+[2,'ตัวจีนใดแปลว่า แม่',['妈妈','爸爸','弟弟','姐姐'],0,'妈妈 = แม่'],
+[2,'ตัวจีนใดแปลว่า พี่ชาย',['哥哥','弟弟','姐姐','妹妹'],0,'哥哥 = พี่ชาย'],
+[2,'ตัวจีนใดแปลว่า น้องสาว',['妹妹','姐姐','妈妈','爷爷'],0,'妹妹 = น้องสาว'],
+[2,'ตัวจีนใดแปลว่า น้องชาย',['弟弟','哥哥','爸爸','奶奶'],0,'弟弟 = น้องชาย'],
+[2,'家 (jiā) แปลว่าอะไร',['บ้าน / ครอบครัว','โรงเรียน','ตลาด','รถยนต์'],0,'家 หมายถึงบ้านหรือครอบครัว'],
+[2,'我爱妈妈 แปลว่าอะไร',['ฉันรักแม่','ฉันรักพ่อ','ฉันเกลียดแม่','ฉันมีแม่'],0,'爱 = รัก'],
+[2,'我有哥哥 แปลว่าอะไร',['ฉันมีพี่ชาย','ฉันมีน้องชาย','ฉันเป็นพี่ชาย','ฉันไม่มีพี่'],0,'有 = มี, 哥哥 = พี่ชาย'],
+[2,'爸爸和妈妈 แปลว่าอะไร',['พ่อและแม่','พ่อหรือแม่','พ่อกับพี่','แม่กับน้อง'],0,'和 = และ'],
+[2,'ใครคือผู้ที่เรียกว่า 弟弟 สำหรับคุณ',['น้องชาย','พี่ชาย','ลุง','ปู่'],0,'弟弟 คือน้องชาย'],
+[2,'คำใดหมายถึง "พี่สาว"',['姐姐','妹妹','妈妈','奶奶'],0,'姐姐 = พี่สาว'],
+[2,'คำใดหมายถึง "ปู่"',['爷爷','爸爸','哥哥','弟弟'],0,'爷爷 = ปู่']
+];
+BANK.science=[
+/* 0 สสาร */
+[0,'สสารมีกี่สถานะหลัก',['3','2','4','5'],0,'ของแข็ง ของเหลว และแก๊ส'],
+[0,'น้ำแข็งเป็นสสารสถานะใด',['ของแข็ง','ของเหลว','แก๊ส','พลาสมา'],0,'น้ำแข็งคือน้ำในสถานะของแข็ง'],
+[0,'ไอน้ำเป็นสสารสถานะใด',['แก๊ส','ของแข็ง','ของเหลว','ผลึก'],0,'ไอน้ำคือน้ำที่อยู่ในสถานะแก๊ส'],
+[0,'สถานะใดมีรูปร่างและปริมาตรคงที่',['ของแข็ง','ของเหลว','แก๊ส','ทุกสถานะ'],0,'ของแข็งมีรูปร่างและปริมาตรคงที่'],
+[0,'สถานะใดมีปริมาตรคงที่แต่รูปร่างเปลี่ยนตามภาชนะ',['ของเหลว','ของแข็ง','แก๊ส','ไม่มี'],0,'ของเหลวไหลได้ แต่ปริมาตรคงที่'],
+[0,'สถานะใดไม่มีรูปร่างและปริมาตรที่แน่นอน',['แก๊ส','ของแข็ง','ของเหลว','ผลึก'],0,'แก๊สแผ่ขยายเต็มภาชนะที่บรรจุ'],
+[0,'การเปลี่ยนสถานะจากของแข็งเป็นของเหลวเรียกว่าอะไร',['การหลอมเหลว','การระเหย','การควบแน่น','การเยือกแข็ง'],0,'น้ำแข็งละลายเป็นน้ำคือการหลอมเหลว'],
+[0,'การเปลี่ยนสถานะจากของเหลวเป็นแก๊สเรียกว่าอะไร',['การกลายเป็นไอ','การหลอมเหลว','การเยือกแข็ง','การระเหิด'],0,'น้ำเดือดกลายเป็นไอน้ำ'],
+[0,'การเปลี่ยนสถานะจากแก๊สเป็นของเหลวเรียกว่าอะไร',['การควบแน่น','การหลอมเหลว','การเยือกแข็ง','การระเหิด'],0,'หยดน้ำที่เกาะข้างแก้วน้ำเย็นเกิดจากการควบแน่น'],
+[0,'การเปลี่ยนสถานะจากของเหลวเป็นของแข็งเรียกว่าอะไร',['การเยือกแข็ง','การหลอมเหลว','การควบแน่น','การกลายเป็นไอ'],0,'น้ำในช่องแช่แข็งกลายเป็นน้ำแข็ง'],
+[0,'สิ่งใดต่อไปนี้เป็นสสาร',['อากาศ','แสงสว่าง','ความร้อน','เสียง'],0,'สสารมีมวลและต้องการที่อยู่ อากาศจึงเป็นสสาร'],
+[0,'ข้อใดไม่ใช่สสาร',['แสงอาทิตย์','น้ำ','หิน','อากาศ'],0,'แสงเป็นพลังงาน ไม่มีมวล'],
+[0,'สสารมีคุณสมบัติร่วมกันคือข้อใด',['มีมวลและต้องการที่อยู่','มีสีเสมอ','มีกลิ่นเสมอ','เป็นของแข็งเสมอ'],0,'สสารทุกชนิดมีมวลและต้องการที่อยู่'],
+[0,'อนุภาคของสสารในสถานะใดอยู่ชิดกันที่สุด',['ของแข็ง','ของเหลว','แก๊ส','เท่ากันทุกสถานะ'],0,'ของแข็งมีอนุภาคเรียงชิดกันมาก'],
+[0,'อนุภาคของสสารในสถานะใดอยู่ห่างกันที่สุด',['แก๊ส','ของแข็ง','ของเหลว','เท่ากันทุกสถานะ'],0,'แก๊สมีอนุภาคอยู่ห่างกันและเคลื่อนที่เร็ว'],
+[0,'น้ำที่อุณหภูมิห้องเป็นสถานะใด',['ของเหลว','ของแข็ง','แก๊ส','พลาสมา'],0,'ที่อุณหภูมิห้อง น้ำเป็นของเหลว'],
+[0,'จุดเดือดของน้ำบริสุทธิ์ที่ความดันบรรยากาศปกติคือเท่าใด',['100 องศาเซลเซียส','0 องศาเซลเซียส','50 องศาเซลเซียส','37 องศาเซลเซียส'],0,'น้ำเดือดที่ 100 องศาเซลเซียส'],
+[0,'จุดเยือกแข็งของน้ำบริสุทธิ์คือเท่าใด',['0 องศาเซลเซียส','100 องศาเซลเซียส','25 องศาเซลเซียส','-100 องศาเซลเซียส'],0,'น้ำแข็งตัวที่ 0 องศาเซลเซียส'],
+[0,'เมื่อให้ความร้อนแก่น้ำแข็ง น้ำแข็งจะเกิดการเปลี่ยนแปลงอย่างไร',['ละลายเป็นน้ำ','กลายเป็นแก๊สทันที','แข็งขึ้น','ไม่เปลี่ยนแปลง'],0,'น้ำแข็งดูดความร้อนแล้วหลอมเหลว'],
+[0,'ข้อใดเป็นการเปลี่ยนแปลงทางกายภาพ',['น้ำแข็งละลาย','ไม้ไหม้ไฟ','เหล็กเป็นสนิม','นมบูด'],0,'น้ำแข็งละลายเปลี่ยนสถานะ แต่ยังเป็นน้ำเหมือนเดิม'],
+/* 1 เซลล์ */
+[1,'หน่วยพื้นฐานของสิ่งมีชีวิตคืออะไร',['เซลล์','อะตอม','อวัยวะ','เนื้อเยื่อ'],0,'เซลล์เป็นหน่วยพื้นฐานที่เล็กที่สุดของสิ่งมีชีวิต'],
+[1,'ใครเป็นผู้ตั้งชื่อ "เซลล์" เป็นคนแรกจากการส่องไม้ก๊อก',['โรเบิร์ต ฮุก','ชาร์ลส์ ดาร์วิน','หลุยส์ ปาสเตอร์','เกรกอร์ เมนเดล'],0,'โรเบิร์ต ฮุก สังเกตไม้ก๊อกด้วยกล้องจุลทรรศน์เมื่อ พ.ศ. 2208'],
+[1,'ส่วนของเซลล์ใดทำหน้าที่ควบคุมกิจกรรมของเซลล์',['นิวเคลียส','ไมโทคอนเดรีย','คลอโรพลาสต์','ผนังเซลล์'],0,'นิวเคลียสเป็นศูนย์กลางควบคุมกิจกรรมและเก็บสารพันธุกรรม'],
+[1,'ส่วนของเซลล์ใดผลิตพลังงานให้เซลล์',['ไมโทคอนเดรีย','นิวเคลียส','แวคิวโอล','ผนังเซลล์'],0,'ไมโทคอนเดรียสร้างพลังงานผ่านการหายใจระดับเซลล์'],
+[1,'ส่วนของเซลล์ใดใช้สังเคราะห์ด้วยแสง',['คลอโรพลาสต์','ไมโทคอนเดรีย','ไรโบโซม','เยื่อหุ้มเซลล์'],0,'คลอโรพลาสต์มีคลอโรฟิลล์สำหรับสังเคราะห์ด้วยแสง'],
+[1,'โครงสร้างใดพบในเซลล์พืชแต่ไม่พบในเซลล์สัตว์',['ผนังเซลล์','ไซโทพลาซึม','นิวเคลียส','เยื่อหุ้มเซลล์'],0,'เซลล์พืชมีผนังเซลล์และคลอโรพลาสต์'],
+[1,'โครงสร้างใดทำหน้าที่ควบคุมการผ่านเข้าออกของสารในเซลล์',['เยื่อหุ้มเซลล์','ผนังเซลล์','นิวเคลียส','ไรโบโซม'],0,'เยื่อหุ้มเซลล์เลือกให้สารบางอย่างผ่านเข้าออก'],
+[1,'ส่วนใดของเซลล์พืชทำให้เซลล์มีรูปร่างแข็งแรง',['ผนังเซลล์','ไซโทพลาซึม','ไมโทคอนเดรีย','นิวเคลียส'],0,'ผนังเซลล์ประกอบด้วยเซลลูโลสช่วยค้ำจุนรูปร่าง'],
+[1,'สิ่งมีชีวิตที่มีเพียงเซลล์เดียวเรียกว่าอะไร',['สิ่งมีชีวิตเซลล์เดียว','สิ่งมีชีวิตหลายเซลล์','เนื้อเยื่อ','อวัยวะ'],0,'เช่น อะมีบา พารามีเซียม'],
+[1,'ข้อใดเป็นสิ่งมีชีวิตเซลล์เดียว',['อะมีบา','ต้นมะม่วง','แมว','คน'],0,'อะมีบามีเพียงหนึ่งเซลล์'],
+[1,'ลำดับการจัดระบบของสิ่งมีชีวิตจากเล็กไปใหญ่คือข้อใด',['เซลล์ → เนื้อเยื่อ → อวัยวะ → ระบบอวัยวะ','อวัยวะ → เซลล์ → เนื้อเยื่อ','เนื้อเยื่อ → เซลล์ → อวัยวะ','ระบบอวัยวะ → อวัยวะ → เซลล์'],0,'เซลล์รวมกันเป็นเนื้อเยื่อ เนื้อเยื่อเป็นอวัยวะ และอวัยวะเป็นระบบอวัยวะ'],
+[1,'กลุ่มของเซลล์ชนิดเดียวกันที่ทำงานร่วมกันเรียกว่าอะไร',['เนื้อเยื่อ','อวัยวะ','อะตอม','โมเลกุล'],0,'เนื้อเยื่อคือกลุ่มเซลล์ชนิดเดียวกัน'],
+[1,'หัวใจจัดอยู่ในระดับใดของการจัดระบบ',['อวัยวะ','เซลล์','เนื้อเยื่อ','ระบบอวัยวะ'],0,'หัวใจเป็นอวัยวะที่ประกอบด้วยเนื้อเยื่อหลายชนิด'],
+[1,'เครื่องมือใดใช้สังเกตเซลล์',['กล้องจุลทรรศน์','เทอร์โมมิเตอร์','ไม้บรรทัด','ตราชั่ง'],0,'เซลล์เล็กมาก ต้องใช้กล้องจุลทรรศน์'],
+[1,'ส่วนประกอบใดมีทั้งในเซลล์พืชและเซลล์สัตว์',['นิวเคลียส','คลอโรพลาสต์','ผนังเซลล์','เซลลูโลส'],0,'นิวเคลียสพบได้ทั้งเซลล์พืชและเซลล์สัตว์'],
+[1,'ของเหลวภายในเซลล์ที่เป็นที่อยู่ของออร์แกเนลล์ต่าง ๆ คืออะไร',['ไซโทพลาซึม','เยื่อหุ้มเซลล์','ผนังเซลล์','นิวเคลียส'],0,'ไซโทพลาซึมเป็นสารกึ่งเหลวภายในเซลล์'],
+[1,'เซลล์ใดในร่างกายคนทำหน้าที่ลำเลียงออกซิเจน',['เม็ดเลือดแดง','เซลล์ประสาท','เซลล์กล้ามเนื้อ','เซลล์ผิวหนัง'],0,'เม็ดเลือดแดงมีฮีโมโกลบินจับกับออกซิเจน'],
+[1,'เซลล์ใดทำหน้าที่ส่งกระแสประสาท',['เซลล์ประสาท','เม็ดเลือดแดง','เซลล์ไขมัน','เซลล์กระดูก'],0,'เซลล์ประสาทส่งสัญญาณไปทั่วร่างกาย'],
+[1,'ข้อใดกล่าวถูกต้อง',['สิ่งมีชีวิตทุกชนิดประกอบด้วยเซลล์','ไวรัสทุกชนิดมีเซลล์','หินมีเซลล์','น้ำมีเซลล์'],0,'สิ่งมีชีวิตประกอบด้วยเซลล์อย่างน้อยหนึ่งเซลล์'],
+[1,'เซลล์สัตว์โดยทั่วไปมีรูปร่างอย่างไร',['ค่อนข้างกลมหรือไม่แน่นอน','เป็นสี่เหลี่ยมเสมอ','เป็นสามเหลี่ยมเสมอ','เป็นเส้นตรง'],0,'เซลล์สัตว์ไม่มีผนังเซลล์ จึงมีรูปร่างยืดหยุ่น'],
+/* 2 พลังงาน */
+[2,'กฎการอนุรักษ์พลังงานกล่าวว่าอย่างไร',['พลังงานไม่สูญหายแต่เปลี่ยนรูปได้','พลังงานสร้างขึ้นได้ใหม่','พลังงานหมดไปเมื่อใช้งาน','พลังงานเกิดจากความว่างเปล่า'],0,'พลังงานเปลี่ยนรูปได้ แต่ปริมาณรวมคงเดิม'],
+[2,'หน่วยของพลังงานในระบบ SI คืออะไร',['จูล','วัตต์','นิวตัน','เมตร'],0,'หน่วยพลังงานคือจูล (J)'],
+[2,'หลอดไฟเปลี่ยนพลังงานไฟฟ้าเป็นพลังงานอะไรเป็นหลัก',['แสงและความร้อน','เสียง','เคมี','นิวเคลียร์'],0,'หลอดไฟให้แสงและความร้อน'],
+[2,'พัดลมเปลี่ยนพลังงานไฟฟ้าเป็นพลังงานอะไร',['พลังงานกล','พลังงานแสง','พลังงานเคมี','พลังงานนิวเคลียร์'],0,'มอเตอร์พัดลมหมุนใบพัด จึงเป็นพลังงานกล'],
+[2,'แหล่งพลังงานหลักของโลกคืออะไร',['ดวงอาทิตย์','ดวงจันทร์','ดาวอังคาร','แกนโลก'],0,'ดวงอาทิตย์ให้แสงและความร้อนแก่โลก'],
+[2,'พืชเปลี่ยนพลังงานแสงเป็นพลังงานรูปใด',['พลังงานเคมี','พลังงานเสียง','พลังงานไฟฟ้า','พลังงานนิวเคลียร์'],0,'พืชเก็บพลังงานแสงไว้ในรูปพลังงานเคมีในน้ำตาล'],
+[2,'พลังงานที่วัตถุมีเพราะเคลื่อนที่เรียกว่าอะไร',['พลังงานจลน์','พลังงานศักย์','พลังงานเคมี','พลังงานแสง'],0,'วัตถุที่เคลื่อนที่มีพลังงานจลน์'],
+[2,'พลังงานที่สะสมในวัตถุที่อยู่สูงจากพื้นเรียกว่าอะไร',['พลังงานศักย์โน้มถ่วง','พลังงานจลน์','พลังงานเสียง','พลังงานความร้อน'],0,'ของที่อยู่สูงมีพลังงานศักย์โน้มถ่วง'],
+[2,'ข้อใดเป็นพลังงานทดแทน',['พลังงานแสงอาทิตย์','ถ่านหิน','น้ำมันดิบ','ก๊าซธรรมชาติ'],0,'พลังงานแสงอาทิตย์ใช้แล้วเกิดขึ้นใหม่ได้'],
+[2,'ข้อใดเป็นเชื้อเพลิงฟอสซิล',['ถ่านหิน','ลม','น้ำตก','แสงอาทิตย์'],0,'ถ่านหินเกิดจากซากพืชซากสัตว์ทับถมนานนับล้านปี'],
+[2,'กังหันลมเปลี่ยนพลังงานลมเป็นพลังงานรูปใด',['พลังงานไฟฟ้า','พลังงานเคมี','พลังงานนิวเคลียร์','พลังงานเสียงเท่านั้น'],0,'กังหันลมหมุนเครื่องกำเนิดไฟฟ้า'],
+[2,'เมื่อเราถูมือเร็ว ๆ จะเกิดพลังงานอะไร',['ความร้อน','แสง','เคมี','ไฟฟ้า'],0,'แรงเสียดทานเปลี่ยนพลังงานกลเป็นความร้อน'],
+[2,'แบตเตอรี่เก็บพลังงานในรูปใด',['พลังงานเคมี','พลังงานเสียง','พลังงานลม','พลังงานแสง'],0,'แบตเตอรี่เก็บพลังงานเคมีไว้เปลี่ยนเป็นไฟฟ้า'],
+[2,'ลำโพงเปลี่ยนพลังงานไฟฟ้าเป็นพลังงานรูปใด',['พลังงานเสียง','พลังงานแสงเท่านั้น','พลังงานเคมี','พลังงานนิวเคลียร์'],0,'ลำโพงสั่นสะเทือนอากาศจนเกิดเสียง'],
+[2,'เซลล์แสงอาทิตย์ (Solar cell) เปลี่ยนพลังงานใดเป็นไฟฟ้า',['พลังงานแสง','พลังงานเสียง','พลังงานลม','พลังงานเคมี'],0,'แผงโซลาร์เซลล์รับแสงแล้วผลิตไฟฟ้า'],
+[2,'พลังงานจากการเผาไหม้ของฟืนคือพลังงานรูปใดเป็นหลัก',['ความร้อนและแสง','เสียง','แม่เหล็ก','ไฟฟ้าสถิต'],0,'การเผาไหม้ปล่อยพลังงานความร้อนและแสง'],
+[2,'การประหยัดพลังงานทำได้อย่างไร',['ปิดไฟเมื่อไม่ใช้งาน','เปิดไฟทิ้งไว้ทั้งวัน','เปิดแอร์ตลอดเวลา','ใช้เครื่องใช้ไฟฟ้าโดยไม่จำเป็น'],0,'ปิดอุปกรณ์เมื่อไม่ใช้ช่วยลดการสิ้นเปลืองพลังงาน'],
+[2,'พลังงานจากน้ำตกที่ไหลลงมาเปลี่ยนเป็นไฟฟ้าได้ที่ใด',['โรงไฟฟ้าพลังน้ำ','โรงไฟฟ้าถ่านหิน','โรงไฟฟ้านิวเคลียร์','โรงไฟฟ้าพลังลม'],0,'น้ำที่ไหลหมุนกังหันของโรงไฟฟ้าพลังน้ำ'],
+[2,'ดวงอาทิตย์ให้พลังงานในรูปใดเป็นหลัก',['แสงและความร้อน','เสียง','แม่เหล็ก','ไฟฟ้าสถิต'],0,'ดวงอาทิตย์แผ่พลังงานเป็นแสงและความร้อน'],
+[2,'ข้อใดเป็นตัวอย่างของพลังงานจลน์',['ลูกบอลที่กำลังกลิ้ง','หนังสือวางบนชั้นสูง','ถ่านไฟฉายที่ยังไม่ใช้','น้ำมันในถัง'],0,'วัตถุที่กำลังเคลื่อนที่มีพลังงานจลน์']
+];
+/*BANK_END*/
+const GR={thai:['#f6a623','#e8590c'],english:['#4facfe','#4338ca'],chinese:['#ff5f6d','#b3123a'],science:['#34d399','#0f766e']};
+const TH=[['ทะเล','#0e7490','#1d4ed8','#0b1b2e','#10243b','#14b8a6','#3b82f6'],
+['จักรวาล','#7c3aed','#db2777','#150b2e','#221445','#a78bfa','#ec4899'],
+['พระอาทิตย์ตก','#f97316','#be123c','#2a0f14','#3d1a1f','#fb923c','#f43f5e'],
+['ป่าเขียว','#16a34a','#0f766e','#0a1f16','#12301f','#34d399','#22c55e'],
+['ซากุระ','#f472b6','#a855f7','#2b1022','#40193a','#f9a8d4','#c084fc'],
+['ทอง','#ca8a04','#b45309','#1f1708','#33260d','#facc15','#f59e0b'],
+['ดำสนิท','#334155','#1e293b','#05070a','#111827','#64748b','#94a3b8']];
+
+/* ---------- ไอคอน ---------- */
+const sv_=p=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
+const I={menu:sv_('<path d="M4 7h16M4 12h16M4 17h10"/>'),set:sv_('<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>'),
+back:sv_('<path d="M15 5l-7 7 7 7"/>'),close:sv_('<path d="M6 6l12 12M18 6L6 18"/>'),flame:sv_('<path d="M12 3c1 3.500 5 5 5 10a5 5 0 01-10 0c0-2 1-3.500 2-4.500 0 2 1 3 2 3 0-3-1-5 1-8.500z"/>'),
+bolt:sv_('<path d="M13 2L5 14h6l-1 8 8-12h-6z"/>'),clock:sv_('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),check:sv_('<path d="M5 12.500l5 5 9-10"/>'),
+trophy:sv_('<path d="M8 4h8v5a4 4 0 01-8 0zM8 6H4v1a3 3 0 003 3M16 6h4v1a3 3 0 01-3 3M12 13v4M8 21h8M10 17h4"/>'),
+book:sv_('<path d="M4 5v14h8a2 2 0 012 2V7a2 2 0 00-2-2zM20 5v14h-8"/>'),share:sv_('<circle cx="6" cy="12" r="2.500"/><circle cx="18" cy="6" r="2.500"/><circle cx="18" cy="18" r="2.500"/><path d="M8.300 10.800l7.400-3.600M8.300 13.200l7.400 3.600"/>'),
+info:sv_('<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.500v.5"/>'),arr:sv_('<path d="M5 12h14M13 6l6 6-6 6"/>'),star:sv_('<path d="M12 3l2.700 5.600 6.100.8-4.500 4.200 1.100 6.100L12 16.800 6.600 19.700l1.100-6.100L3.200 9.400l6.100-.8z"/>'),
+redo:sv_('<path d="M20 5v5h-5M4 19v-5h5"/><path d="M19 10a7 7 0 00-12-2.500M5 14a7 7 0 0012 2.500"/>'),list:sv_('<path d="M9 6h11M9 12h11M9 18h11M4.500 6h.1M4.500 12h.1M4.500 18h.1"/>')};
+const BRAIN='<svg class="brain" viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="bgr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#ffd166"/><stop offset="1" stop-color="var(--b)"/></linearGradient></defs><path d="M60 20c-8-8-24-6-28 6-10 1-17 11-14 21-6 5-6 15 0 20-2 11 6 21 17 20 4 8 18 9 25 1 7 8 21 7 25-1 11 1 19-9 17-20 6-5 6-15 0-20 3-10-4-20-14-21-4-12-20-14-28-6z" fill="url(#bgr)" opacity=".95"/><path d="M60 22v76M60 44c-9 0-14 5-16 12M60 62c8 0 14 4 16 11M60 78c-7 0-11 3-13 8M60 36c8 0 12-3 15-8" fill="none" stroke="var(--bg)" stroke-width="3.500" stroke-linecap="round" opacity=".55"/></svg>';
+
+/* ---------- ข้อมูลผู้เล่น ---------- */
+const ld=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const today=()=>new Date().toLocaleDateString('en-CA');
+const yest=()=>new Date(Date.now()-864e5).toLocaleDateString('en-CA');
+let P=Object.assign({xp:0,streak:0,last:'',played:0,right:0,ans:0,best:{},day:'',dayAns:0,subs:{},perfect:0,maxCombo:0,bd:[]},ld('bgp',{}));
+if(P.day!==today()){P.day=today();P.dayAns=0}
+let ST=Object.assign({snd:1,tm:1,n:20},ld('bgs',{}));
+const GOAL=20,DUR=20;
+const cum=l=>30*l*(l-1),lv=x=>{let l=1;while(x>=cum(l+1))l++;return l};
+const LT=['มือใหม่หัดคิด','นักจดจำ','นักอ่านตัวยง','ตัวท็อปห้อง','เซียนข้อสอบ','อัจฉริยะ','ปราชญ์น้อย','จอมยุทธ์สมอง','ตำนานห้องเรียน'];
+const ltitle=l=>LT[Math.min(l-1,LT.length-1)];
+const curStreak=()=>P.last===today()||P.last===yest()?P.streak:0;
+const BG=[['first','เริ่มต้นสมอง','ทำควิซครั้งแรก',p=>p.played>=1],['perf','เป๊ะทุกข้อ','ได้คะแนนเต็ม 1 ครั้ง',p=>p.perfect>=1],['st3','ไฟลุก 3 วัน','เล่นต่อเนื่อง 3 วัน',p=>curStreak()>=3],['cmb','คอมโบ 8','ตอบถูกติดกัน 8 ข้อ',p=>p.maxCombo>=8],['c100','ร้อยข้อ','ตอบถูกครบ 100 ข้อ',p=>p.right>=100],['lv5','เลเวล 5','สะสม XP ถึงเลเวล 5',p=>lv(p.xp)>=5],['all','นักสำรวจ','ลองครบทุกวิชา',p=>Object.keys(p.subs).length>=Object.keys(T).length]];
+
+/* ---------- ธีม ---------- */
+let TI=+ld('bgt',0)||0;
+function applyTheme(i){const t=TH[i]||TH[0],r=document.documentElement.style;TI=i;
+r.setProperty('--g1',t[1]);r.setProperty('--g2',t[2]);r.setProperty('--bg',t[3]);r.setProperty('--pn',t[4]);r.setProperty('--a',t[5]);r.setProperty('--b',t[6]);
+const m=document.querySelector('meta[name=theme-color]');if(m)m.content=t[3]}
+function setTheme(i){sv('bgt',i);applyTheme(i);setSheet()}
+applyTheme(TI);
+
+/* ---------- ตัวช่วย ---------- */
+const A=document.getElementById('app');
+let sub,ci,Q,S={},U=ld('bgu',null),TMR=null,lm='id';
+const gr=k=>`linear-gradient(135deg,${GR[k][0]},${GR[k][1]})`;
+const clr=()=>{clearInterval(S.iv);clearInterval(TMR)};
+const R=h=>{clr();A.innerHTML=h};
+const back=f=>`<button class="ic" aria-label="ย้อนกลับ" onclick="${f}">${I.back}</button>`;
+const key=()=>sub+ci;
+const best=k=>P.best[k];
+const passed=k=>T[k].items.filter((_,i)=>(P.best[k+i]||0)>=60).length;
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;A.appendChild(d);setTimeout(()=>d.remove(),2200)}
+function sheet(h){const o=document.getElementById('sh');if(o)o.remove();const d=document.createElement('div');d.className='sheet';d.id='sh';d.onclick=e=>{if(e.target==d)d.remove()};d.innerHTML=`<div>${h}<button class="btn g" style="width:100%;margin-top:16px" onclick="document.getElementById('sh').remove()">ปิด</button></div>`;A.appendChild(d)}
+let AC;function tone(f,d,t=0,ty='sine',v=.12){if(!ST.snd)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain(),n=AC.currentTime+t;o.type=ty;o.frequency.value=f;g.gain.setValueAtTime(v,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g);g.connect(AC.destination);o.start(n);o.stop(n+d)}catch(e){}}
+const sfx={ok(){tone(660,.12);tone(880,.2,.1)},no(){tone(170,.28,0,'sawtooth',.07)},win(){[523,659,784,1047].forEach((f,i)=>tone(f,.22,i*.1))}};
+const buzz=n=>{try{ST.snd&&navigator.vibrate&&navigator.vibrate(n)}catch(e){}};
+function confetti(){if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;const c=document.createElement('canvas');c.className='cf';A.appendChild(c);const w=c.width=A.clientWidth,h=c.height=A.clientHeight,x=c.getContext('2d'),cs=getComputedStyle(document.documentElement),cols=['#ffd166','#ffffff',cs.getPropertyValue('--a').trim()||'#14b8a6',cs.getPropertyValue('--b').trim()||'#3b82f6','#ff8a4c'];
+const ps=Array.from({length:100},()=>({x:w/2,y:h*.38,vx:(Math.random()-.5)*13,vy:-Math.random()*13-3,s:5+Math.random()*7,c:cols[Math.random()*cols.length|0],r:Math.random()*6,vr:(Math.random()-.5)*.4}));let f=0;
+(function d(){x.clearRect(0,0,w,h);ps.forEach(p=>{p.vy+=.34;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/3,p.s,p.s*.6);x.restore()});if(++f<160)requestAnimationFrame(d);else c.remove()})()}
+
+/* ---------- หน้าจอ ---------- */
+function start(){R(`<div class="scr"><div class="hero">${BRAIN}<div class="logo">BrainGame</div><p>ทบทวนบทเรียน ท้าทายสมอง<br>ด้วยควิซทุกวิชา สะสม XP และเลเวล</p><button class="btn" onclick="home()">เริ่มเลย ${I.arr}</button></div></div>`)}
+function greet(){const h=new Date().getHours();return h<4?'ดึกแล้วนะ':h<11?'อรุณสวัสดิ์':h<17?'สวัสดีตอนบ่าย':'สวัสดีตอนเย็น'}
+function home(m){const L=lv(P.xp),pr=(P.xp-cum(L))/(cum(L+1)-cum(L)),dg=Math.min(P.dayAns,GOAL),C=2*Math.PI*9;
+R(`<div class="scr"><div class="top"><button class="ic" aria-label="เมนู" onclick="home(1)">${I.menu}</button><div class="hi"><small>${greet()}</small><b>${esc(U?U.n:'ผู้เยี่ยมชม')}</b></div><button class="ic" aria-label="ตั้งค่า" onclick="setSheet()">${I.set}</button></div>
+<div class="stat"><div class="l"><div class="lvl"><span class="lv">LV ${L}</span><div><b>${ltitle(L)}</b><small>${P.xp} XP</small></div></div><div class="xp"><i style="width:${pr*100}%"></i></div><span class="mute">อีก ${cum(L+1)-P.xp} XP ถึงเลเวล ${L+1}</span></div>
+<div class="r"><div class="pill f">${I.flame}${curStreak()} วัน</div><div class="pill"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke-opacity=".25"/><circle cx="12" cy="12" r="9" stroke-dasharray="${C*dg/GOAL} ${C}" transform="rotate(-90 12 12)"/></svg>${dg}/${GOAL}</div></div></div>
+<div class="sec"><b>เลือกวิชา</b><small>เป้าหมายวันนี้ ${GOAL} ข้อ</small></div>
+<div class="grid">${Object.keys(T).map(k=>{const p=passed(k),n=T[k].items.length;return `<button class="card" style="background:${gr(k)}" onclick="sub='${k}';contents()"><span class="gl">${T[k].g}</span><b>${T[k].n}</b><span>${T[k].d}</span><div class="mini"><i style="width:${p/n*100}%"></i></div><small>ผ่าน ${p}/${n} หัวข้อ</small></button>`}).join('')}</div>${m?drawer():''}</div>`)}
+function contents(){R(`<div class="scr"><div class="top">${back('home()')}<h2>${T[sub].n}</h2><span class="tag" style="background:${gr(sub)};margin:0">${T[sub].g}</span></div><div class="sub">เลือกหัวข้อที่ต้องการอ่าน · ผ่านเมื่อได้ตั้งแต่ 60%</div><div class="list">${T[sub].items.map((x,i)=>{const b=best(sub+i);return `<button class="row" onclick="ci=${i};page()"><div class="n" style="background:${gr(sub)}">${i+1}</div><div class="t"><b>${esc(x[0])}</b><small>${b==null?'ยังไม่เคยทำควิซ':'ทำควิซแล้ว'}</small></div>${b==null?`<span class="badge">ใหม่</span>`:`<span class="badge ${b>=60?'ok':''}">${b}%</span>`}</button>`}).join('')}</div></div>`)}
+function page(){const x=T[sub].items[ci],b=best(key());R(`<div class="scr"><div class="top">${back('contents()')}<h2>${T[sub].n}</h2>${b==null?'':`<span class="badge ${b>=60?'ok':''}">ดีที่สุด ${b}%</span>`}</div><div class="read"><span class="tag" style="background:${gr(sub)}">${T[sub].d}</span><h3>${esc(x[0])}</h3>${esc(x[1])}</div>
+<div class="chips"><small>จำนวนข้อ</small>${[10,20].map(n=>`<button class="ch ${ST.n==n?'on':''}" onclick="setSt('n',${n});page()">${n} ข้อ</button>`).join('')}</div>
+<div class="bar"><button class="btn g" onclick="contents()">${I.list} หัวข้ออื่น</button><button class="btn" onclick="quiz()">เริ่ม Quiz ${I.bolt}</button></div></div>`)}
+
+/* ---------- สร้างคำถามด้วย AI ---------- */
+const SEEN={};let ER='';
+const gk=()=>{try{return localStorage.getItem('bgk')||''}catch(e){return ''}};
+async function gen(p){const k=gk();
+if(k){const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:8000,messages:[{role:'user',content:p}]})});
+const d=await res.json();if(!res.ok)throw new Error(d.error&&d.error.message||res.status);
+const t=d.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+return JSON.parse(t.slice(t.indexOf('['),t.lastIndexOf(']')+1))}
+if(typeof claude!=='undefined'){const m=await claude.use('sample');if(m)return m.json(p,{cache:false})}
+throw new Error('no key')}
+const TIPS=['อ่านโจทย์ให้ครบก่อนเลือกคำตอบ','ตอบถูกติดกันเพื่อสะสมคอมโบ','50:50 ใช้ได้ 1 ครั้งต่อรอบ','ตอบเร็วได้โบนัส XP เพิ่ม','เล่นทุกวันเพื่อรักษาไฟสตรีค'];
+async function quiz(){const it=T[sub].items[ci],k=key(),seen=SEEN[k]=SEEN[k]||[],N=ST.n;
+S={qi:0,sc:0,combo:0,maxCombo:0,xg:0,half:0,wrong:[],lock:false};let ti=0;
+R(`<div class="scr"><div class="hero"><div class="sp"></div><b style="font:500 20px var(--fd)">AI กำลังสร้างคำถาม ${N} ข้อ...</b><p style="margin:8px 0 0">${T[sub].n} · ${esc(it[0])}</p><p class="tip" id="tip">${TIPS[0]}</p></div></div>`);
+TMR=setInterval(()=>{const e=document.getElementById('tip');if(e)e.textContent=TIPS[++ti%TIPS.length]},2200);
+let qs=null;
+try{const p=`สร้างข้อสอบปรนัยภาษาไทย ให้ได้ ${N} ข้อพอดี ไม่มากไม่น้อยกว่านี้ วิชา ${T[sub].n} (${T[sub].d}) หัวข้อ "${it[0]}" ระดับ ม.3\nเนื้อหาอ้างอิง: ${it[1]}\nเงื่อนไข: ทุกข้อต้องไม่ซ้ำกัน มีหลายระดับความยาก ตัวเลือก 4 ข้อ กระจายตำแหน่งคำตอบที่ถูกให้หลากหลาย ให้ถามทั้งจากเนื้อหาอ้างอิงและความรู้ที่เกี่ยวข้องกับหัวข้อ${seen.length?'\nห้ามซ้ำหรือคล้ายกับคำถามเหล่านี้: '+seen.slice(-40).join(' | '):''}\nทุกข้อต้องมีคำอธิบายเฉลยสั้น ๆ 1-2 ประโยค\nตอบเป็น JSON array เท่านั้น รูปแบบ [{"q":"คำถาม","o":["ก","ข","ค","ง"],"a":0,"x":"คำอธิบายเฉลย"}] โดย a คือ index (0-3) ของคำตอบที่ถูก`;
+const r=await gen(p),u=new Set(),o=[];(Array.isArray(r)?r:r.questions||[]).forEach(x=>{if(x&&x.q&&Array.isArray(x.o)&&x.o.length==4&&x.a>=0&&x.a<4&&!u.has(x.q)&&!seen.includes(x.q)){u.add(x.q);o.push([String(x.q),x.o.map(String),+x.a,x.x?String(x.x):''])}});
+if(o.length)qs=o.slice(0,N)}catch(e){ER=e.message||''}
+clearInterval(TMR);
+qs=qs||[];const aiN=qs.length;
+if(qs.length<N){const have=new Set(qs.map(x=>x[0]));localQs(N-qs.length,have,seen).forEach(x=>qs.push(x))}
+if(aiN<N)setTimeout(()=>toast(aiN?`AI สร้างได้ ${aiN} ข้อ เติมจากคลังข้อสอบให้ครบ ${N}`:gk()?'AI error: '+ER.slice(0,50):'ใช้คลังข้อสอบในเครื่อง (ไม่ได้ใส่ API key)'),300);
+Q=qs;qs.forEach(x=>seen.push(x[0]));ask()}
+/* สุ่มจากคลังข้อสอบ: หัวข้อนี้ก่อน แล้วเติมจากหัวข้ออื่นในวิชาเดียวกัน ให้ครบจำนวนที่เลือก */
+function localQs(n,have,seen){const sh=a=>[...a].sort(()=>Math.random()-.5),B=BANK[sub]||[],out=[];
+const tiers=[sh(B.filter(x=>x[0]==ci)),sh(B.filter(x=>x[0]!=ci))];
+for(const pass of [0,1])for(const tier of tiers){for(const x of tier){if(out.length>=n)break;if(have.has(x[1])||(pass==0&&seen.includes(x[1])))continue;
+have.add(x[1]);const idx=sh([0,1,2,3]);out.push([x[1],idx.map(i=>x[2][i]),idx.indexOf(x[3]),x[4]||''])}}
+return out}
+
+/* ---------- เล่นควิซ ---------- */
+function ask(){const q=Q[S.qi];S.lock=false;
+R(`<div class="scr"><div class="top">${back('page()')}<h2>${T[sub].n}</h2><span class="cnt">${S.qi+1}<small>/${Q.length}</small></span></div>
+<div class="prog"><i style="width:${S.qi/Q.length*100}%"></i></div>
+<div class="qmeta"><span class="chip">${I.bolt}<b id="xg">${S.xg}</b></span><span class="chip cb" id="cb" ${S.combo>1?'':'hidden'}>${I.flame}x<b id="cv">${S.combo}</b></span>${ST.tm?`<span class="chip tmr" id="tm">${I.clock}<b id="tv">${DUR}</b></span>`:''}</div>
+${ST.tm?'<div class="tbar"><i id="tb"></i></div>':''}
+<div class="qwrap"><div class="qc">${esc(q[0])}</div><div id="opts">${q[1].map((o,i)=>`<button class="opt" onclick="pick(${i})"><i>${'ABCD'[i]}</i><span>${esc(o)}</span></button>`).join('')}</div></div>
+<div class="bar" id="act"><button class="btn g" onclick="half()" ${S.half?'disabled':''}>50:50</button></div></div>`);
+if(ST.tm){S.t0=Date.now();S.iv=setInterval(tick,100)}}
+function tick(){const l=DUR-(Date.now()-S.t0)/1000,b=document.getElementById('tb'),v=document.getElementById('tv'),t=document.getElementById('tm');
+if(!b){clearInterval(S.iv);return}b.style.width=Math.max(0,l/DUR*100)+'%';v.textContent=Math.max(0,Math.ceil(l));t.classList.toggle('warn',l<=5);if(l<=0)pick(-1)}
+function half(){if(S.lock||S.half)return;S.half=1;const q=Q[S.qi],bs=[...document.querySelectorAll('.opt')],w=bs.map((_,i)=>i).filter(i=>i!=q[2]).sort(()=>Math.random()-.5).slice(0,2);w.forEach(i=>bs[i].classList.add('gone'));document.querySelector('#act .btn').disabled=true;tone(440,.1)}
+function pick(i){if(S.lock)return;S.lock=true;clearInterval(S.iv);const q=Q[S.qi],bs=[...document.querySelectorAll('.opt')],ok=i==q[2],left=ST.tm?Math.max(0,DUR-(Date.now()-S.t0)/1000):0;
+bs.forEach((b,j)=>{b.onclick=null;if(j!=q[2]&&j!=i)b.classList.add('dim')});bs[q[2]].classList.add('ok');
+let msg,pts=0;
+if(ok){S.sc++;S.combo++;S.maxCombo=Math.max(S.maxCombo,S.combo);pts=10+(ST.tm?Math.ceil(left/DUR*5):0)+Math.min(S.combo-1,5);S.xg+=pts;msg=`ถูกต้อง! +${pts} XP`;sfx.ok();buzz(20)}
+else{S.combo=0;if(i>=0)bs[i].classList.add('no');S.wrong.push([q,i]);msg=i<0?'หมดเวลา!':'ยังไม่ถูก ลองใหม่รอบหน้า';sfx.no();buzz([40,40,40])}
+document.getElementById('xg').textContent=S.xg;const cb=document.getElementById('cb');cb.hidden=S.combo<2;document.getElementById('cv').textContent=S.combo;
+const last=S.qi+1>=Q.length,act=document.getElementById('act');act.className='';
+act.innerHTML=`<div class="fb ${ok?'ok':'no'}"><div class="fh">${ok?I.check:I.close}<b>${msg}</b></div><p>${ok?'':`เฉลย: <b>${esc(q[1][q[2]])}</b>${q[3]?'<br>':''}`}${q[3]?esc(q[3]):''}</p><button class="btn" onclick="nextQ()">${last?'ดูผลคะแนน':'ถัดไป'} ${I.arr}</button></div>`}
+function nextQ(){++S.qi<Q.length?ask():finish()}
+
+/* ---------- สรุปผล ---------- */
+function finish(){const n=Q.length,pc=Math.round(S.sc/n*100),L0=lv(P.xp),bonus=20+(S.sc==n?30:0);S.xg+=bonus;S.bonus=bonus;
+P.xp+=S.xg;P.played++;P.right+=S.sc;P.ans+=n;P.dayAns+=n;P.subs[sub]=1;P.maxCombo=Math.max(P.maxCombo,S.maxCombo);if(S.sc==n)P.perfect++;
+if((P.best[key()]||0)<pc)P.best[key()]=pc;
+if(P.last!==today()){P.streak=P.last===yest()?P.streak+1:1;P.last=today()}
+S.up=lv(P.xp)>L0;S.nb=BG.filter(b=>!P.bd.includes(b[0])&&b[3](P));S.nb.forEach(b=>P.bd.push(b[0]));save();S.pc=pc;result()}
+function result(){const pc=S.pc,n=Q.length,m=pc>=90?'ฉลาดเกินนน':pc>=60?'เก่งมาก':'สู้ ๆ นะ';
+R(`<div class="scr" style="overflow:auto"><div class="hero" style="justify-content:flex-start;padding-top:6px"><div class="ring" id="rg"><div><b>${S.sc}/${n}</b><small>คะแนน ${pc}%</small></div></div><div class="msg">${m}</div>
+${S.up?`<div class="up">เลเวลอัป! ตอนนี้ LV ${lv(P.xp)} · ${ltitle(lv(P.xp))}</div>`:''}
+<div class="kp"><div><b>+${S.xg}</b><small>XP ที่ได้</small></div><div><b>x${S.maxCombo}</b><small>คอมโบสูงสุด</small></div><div><b>${curStreak()}</b><small>วันต่อเนื่อง</small></div></div>
+${S.nb.length?`<div class="up" style="background:var(--glass2);color:var(--ink)">ปลดล็อกเหรียญ: ${S.nb.map(b=>esc(b[1])).join(', ')}</div>`:''}
+<button class="btn" style="width:100%;margin-bottom:10px" onclick="quiz()">${I.redo} Try Again</button>${S.wrong.length?`<button class="btn g" style="width:100%" onclick="reviewSheet()">ดูข้อที่ผิด (${S.wrong.length})</button>`:''}</div>
+<div class="bar"><button class="btn g" onclick="page()">${I.book} Content</button><button class="btn g" onclick="home()">${I.list} Subject</button></div></div>`);
+requestAnimationFrame(()=>requestAnimationFrame(()=>{const r=document.getElementById('rg');if(r)r.style.setProperty('--p',pc)}));
+if(pc>=60){sfx.win();confetti()}if(S.up||S.nb.length)setTimeout(()=>buzz(60),300)}
+function reviewSheet(){sheet(`<h3>ข้อที่ควรทบทวน</h3>${S.wrong.map(([q,i])=>`<div class="rv"><b>${esc(q[0])}</b>${i>=0?`<span class="w">คุณตอบ: ${esc(q[1][i])}</span><br>`:'<span class="w">หมดเวลา</span><br>'}<span class="g">เฉลย: ${esc(q[1][q[2]])}</span>${q[3]?`<small>${esc(q[3])}</small>`:''}</div>`).join('')}`)}
+
+/* ---------- เมนู / ตั้งค่า / โปรไฟล์ ---------- */
+const itm=(ic,t,f)=>`<button class="it" onclick="${f}">${ic}${t}</button>`;
+function drawer(){return `<div class="ov" onclick="home()"></div><div class="dr"><div class="av">${U?esc(U.n[0].toUpperCase()):'?'}</div><b style="font:500 20px var(--fd)">${U?esc(U.n):'ผู้เยี่ยมชม'}</b><div style="color:var(--mute);font-size:13px">${U?esc(U.e)||'ลงชื่อเข้าใช้แล้ว':'ยังไม่ได้ลงชื่อเข้าใช้'}</div><div style="height:16px"></div>${U?`<button class="btn g" style="width:100%;margin-bottom:12px" onclick="signOut()">ออกจากระบบ</button>`:`<button class="btn" style="width:100%;margin-bottom:12px" onclick="loginScreen()">ลงชื่อเข้าใช้</button>`}${itm(I.trophy,'สถิติและเหรียญรางวัล','statSheet()')}${itm(I.info,'About','aboutSheet()')}${itm(I.book,'Description','descSheet()')}${itm(I.share,'Share','shareApp()')}</div>`}
+function setSt(k,v){ST[k]=v;sv('bgs',ST)}
+function setSheet(){const tg=(k,t)=>`<div class="tg"><span>${t}</span><button class="ch ${ST[k]?'on':''}" onclick="setSt('${k}',${ST[k]?0:1});setSheet()">${ST[k]?'เปิด':'ปิด'}</button></div>`;
+sheet(`<h3>ตั้งค่า</h3><h4>ธีมพื้นหลัง</h4><div style="display:flex;flex-wrap:wrap;gap:12px">${TH.map((t,i)=>`<button onclick="setTheme(${i})" style="text-align:center;font-size:12px;cursor:pointer;background:none;border:0;padding:0"><div class="sw" style="border:3px solid ${i==TI?'#fff':'transparent'};background:radial-gradient(circle at 25% 20%,${t[1]},transparent 70%),radial-gradient(circle at 80% 90%,${t[2]},transparent 70%),${t[3]}"></div>${t[0]}</button>`).join('')}</div>
+<h4>การเล่น</h4>${tg('snd','เสียงและการสั่น')}${tg('tm',`จับเวลา ${DUR} วินาทีต่อข้อ`)}
+<h4>Claude API</h4><input class="fld" id="ak" type="password" placeholder="sk-ant-..." value="${esc(gk())}"><button class="btn" style="width:100%" onclick="saveKey()">บันทึก</button><div style="color:var(--mute);font-size:12px;margin-top:10px">คีย์เก็บไว้ในเครื่องนี้เท่านั้น ใช้สร้างคำถามใหม่ทุกรอบ พร้อมคำอธิบายเฉลย</div>
+<h4>Google / Apple Login</h4><textarea class="fld" id="fc" rows="5" placeholder="วาง firebaseConfig จาก Firebase Console ที่นี่" style="resize:vertical">${FBC()?esc(JSON.stringify(FBC(),null,1)):''}</textarea><button class="btn" style="width:100%" onclick="saveFB()">บันทึก Firebase</button><div style="color:var(--mute);font-size:12px;margin:8px 0 4px">Firebase Console → Authentication → เปิด Google และ Apple แล้วเพิ่มโดเมนเว็บของคุณใน Authorized domains</div><h4>บันทึกขึ้นเว็บ (ชื่อผู้ใช้)</h4><input class="fld" id="cu" placeholder="https://xxxx-default-rtdb.firebaseio.com" value="${esc(CL())}"><button class="btn" style="width:100%" onclick="saveCloud()">บันทึก URL</button><div style="color:var(--mute);font-size:12px;margin:8px 0 4px">สร้าง Realtime Database ฟรีใน Firebase แล้วนำ URL มาวาง จากนั้นผู้เล่นล็อกอินเพื่อบันทึก XP ขึ้นเว็บได้</div><h4>ข้อมูล</h4><button class="btn g" style="width:100%" onclick="resetP()">รีเซ็ตสถิติทั้งหมด</button>`)}
+function saveCloud(){const v=document.getElementById('cu').value.trim();if(v&&!/^https:\/\//.test(v))return toast('URL ต้องขึ้นต้นด้วย https://');sv('bgc',v);document.getElementById('sh').remove();toast(v?'บันทึก URL แล้ว':'ลบ URL แล้ว')}
+function saveKey(){const v=document.getElementById('ak').value.trim();try{v?localStorage.setItem('bgk',v):localStorage.removeItem('bgk')}catch(e){}document.getElementById('sh').remove();toast(v?'บันทึกคีย์แล้ว':'ลบคีย์แล้ว')}
+function resetP(){const b=event.target;if(b.dataset.s!=1){b.dataset.s=1;b.textContent='แตะอีกครั้งเพื่อยืนยันการลบ';b.style.borderColor='var(--no)';return}P={xp:0,streak:0,last:'',played:0,right:0,ans:0,best:{},day:today(),dayAns:0,subs:{},perfect:0,maxCombo:0,bd:[]};save();home();toast('รีเซ็ตแล้ว')}
+function statSheet(){const L=lv(P.xp),acc=P.ans?Math.round(P.right/P.ans*100):0;
+sheet(`<h3>สถิติของคุณ</h3><div class="kp"><div><b>LV ${L}</b><small>${ltitle(L)}</small></div><div><b>${P.xp}</b><small>XP รวม</small></div><div><b>${acc}%</b><small>ความแม่นยำ</small></div></div><div class="kp"><div><b>${P.played}</b><small>ควิซที่เล่น</small></div><div><b>${P.right}</b><small>ข้อที่ถูก</small></div><div><b>${P.perfect}</b><small>เต็ม</small></div></div>
+<h4>เหรียญรางวัล ${P.bd.length}/${BG.length}</h4>${BG.map(b=>`<div class="bd ${P.bd.includes(b[0])?'':'off'}"><div class="m">${I.star}</div><div><b>${b[1]}</b><small>${b[2]}</small></div></div>`).join('')}`)}
+function aboutSheet(){sheet(`<h3>About</h3><b>BrainGame</b> v2.0<br>แอปทบทวนบทเรียนภายใต้หัวข้อ "Creative Digital Media นวัตกรรมสร้างสรรค์สู่สังคม"<br><br><b>ผู้จัดทำ (ม.3/6)</b><br>นัธทวัฒน์ เพ็ชรพันธ์ · กันตพัฒน์ เลิศไพศาลกรกุล · ธีภพ ทองคุ้ม · สุจิรภาคย์ บำเพ็ญรัตน์<br><br><b>ที่ปรึกษา</b><br>มิสปราณิสา อ่ำทอง และ ม.สรายุทธ สุขการ<br><br>Assumption College · ปีการศึกษา 2569`)}
+function descSheet(){sheet(`<h3>Description</h3>รวมเนื้อหาหลายวิชาไว้ในแอปเดียว เลือกวิชาและหัวข้อได้อิสระ แล้วทำควิซเพื่อวัดความเข้าใจ<ul><li>เรียนรู้ได้ทุกเวลา</li><li>วัดและประเมินผลความรู้ของผู้เรียน</li><li>ส่งเสริมการเรียนรู้ด้วยตนเอง</li><li>สะสม XP เลเวล คอมโบ และเหรียญรางวัล</li><li>มีเฉลยพร้อมคำอธิบาย และทบทวนข้อที่ผิดได้</li></ul>`)}
+async function shareApp(){const u=location.href;try{if(navigator.share){await navigator.share({title:'BrainGame',text:'มาทบทวนบทเรียนด้วย BrainGame',url:u});return}await navigator.clipboard.writeText(u);toast('คัดลอกลิงก์แล้ว')}catch(e){sheet(`<h3>Share</h3>คัดลอกลิงก์นี้เพื่อแชร์:<input class="fld" style="margin-top:10px" value="${esc(u)}" readonly>`)}}
+function signOut(){if(U&&U.fb&&window.firebase&&firebase.apps.length)firebase.auth().signOut();U=null;try{localStorage.removeItem('bgu')}catch(e){}home(1)}
+
+/* ---------- บัญชีผู้ใช้ + บันทึกลงเว็บ (Firebase Realtime Database ผ่าน REST) ---------- */
+const CLOUD_URL='';/* ใส่ URL ของ Realtime Database ตรงนี้ เช่น https://ชื่อโปรเจกต์-default-rtdb.firebaseio.com หรือใส่ในหน้าตั้งค่า */
+const CL=()=>String(ld('bgc','')||CLOUD_URL).trim().replace(/\/$/,'');
+async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('braingame:'+s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+const uk=n=>encodeURIComponent(n.trim().toLowerCase().replace(/[.#$\[\]\/]/g,'_'));
+async function cget(n){const r=await fetch(`${CL()}/users/${uk(n)}.json`);if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}
+async function cput(n,o){const r=await fetch(`${CL()}/users/${uk(n)}.json`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(o)});if(!r.ok)throw new Error('HTTP '+r.status)}
+function save(){sv('bgp',P);if(U&&U.fb){fbSave();return}if(U&&U.h&&CL())cput(U.n,{n:U.n,h:U.h,p:P,t:Date.now()}).then(()=>{U.sync=1}).catch(()=>toast('ซิงค์ขึ้นเว็บไม่สำเร็จ ข้อมูลยังอยู่ในเครื่อง'))}
+I.eye=sv_('<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>');
+I.user=sv_('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/>');
+let LM='in';
+function loginScreen(msg){const pu=(document.getElementById('lu')||{}).value||'',up=LM=='up';
+R(`<div class="scr" style="overflow:auto"><div class="top"><button class="ic" aria-label="ปิด" onclick="home(1)">${I.close}</button><h2>บัญชีผู้เล่น</h2></div>
+<div class="auh">${BRAIN.replace('class="brain"','class="brain" style="width:72px;height:72px;animation:none"')}<div><b>${up?'สร้างบัญชีใหม่':'ยินดีต้อนรับกลับ'}</b><small>${up?'บันทึก XP เลเวล และเหรียญของคุณไว้ใช้ต่อทุกเครื่อง':'เข้าสู่ระบบเพื่อเล่นต่อจากที่ค้างไว้'}</small></div></div>
+<div class="seg" role="tablist"><button role="tab" class="${up?'':'on'}" onclick="LM='in';loginScreen()">เข้าสู่ระบบ</button><button role="tab" class="${up?'on':''}" onclick="LM='up';loginScreen()">สมัครสมาชิก</button></div>
+<button class="sb" id="sg" onclick="socialIn('Google')">${GG} ${up?'สมัครด้วย':'เข้าสู่ระบบด้วย'} Google</button><button class="sb" id="sa" onclick="socialIn('Apple')">${AP} ${up?'สมัครด้วย':'เข้าสู่ระบบด้วย'} Apple</button>
+<div class="or2">หรือใช้ชื่อผู้ใช้</div>
+<form onsubmit="loginGo();return false" novalidate>
+<label class="fl"><span>ชื่อผู้ใช้</span><div class="inp"><input id="lu" value="${esc(pu)}" placeholder="เช่น nattawat_01" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="20"></div></label>
+<label class="fl"><span>รหัสผ่าน${up?' (อย่างน้อย 6 ตัว)':''}</span><div class="inp"><input id="lp" type="password" placeholder="••••••" autocomplete="${up?'new-password':'current-password'}" ${up?'oninput="pwm()"':''}><button type="button" class="eye" aria-label="แสดง/ซ่อนรหัสผ่าน" onclick="eye('lp')">${I.eye}</button></div></label>
+${up?`<div class="mt"><i id="mi"></i></div><div class="mtl" id="ml">ความแข็งแรงของรหัสผ่าน</div><label class="fl"><span>ยืนยันรหัสผ่าน</span><div class="inp"><input id="lq" type="password" placeholder="••••••" autocomplete="new-password"><button type="button" class="eye" aria-label="แสดง/ซ่อนรหัสผ่าน" onclick="eye('lq')">${I.eye}</button></div></label>`:''}
+<div class="er" id="le" role="alert">${msg?esc(msg):''}</div>
+<button class="btn" id="lc" type="submit" style="width:100%">${up?'สร้างบัญชี':'เข้าสู่ระบบ'}</button></form>
+<button class="gst" onclick="home(1)">เล่นต่อโดยไม่ล็อกอิน</button>
+<div class="tm2">${CL()||FBC()?'ข้อมูลของคุณจะถูกบันทึกขึ้นเว็บ เปิดจากเครื่องไหนก็เล่นต่อได้':'ยังไม่ได้ตั้งค่าเว็บเซิร์ฟเวอร์ ข้อมูลจะบันทึกในเครื่องนี้เท่านั้น<br>ตั้งค่าได้ที่ ตั้งค่า → บันทึกขึ้นเว็บ'}</div></div>`)}
+function eye(id){const e=document.getElementById(id);e.type=e.type=='password'?'text':'password'}
+function pwm(){const v=document.getElementById('lp').value;let s=0;
+if(v.length>=6)s++;if(v.length>=10)s++;if((/[a-z]/.test(v)&&/[A-Z]/.test(v))||(/\d/.test(v)&&/[a-zA-Zก-๙]/.test(v)))s++;if(/[^\w\sก-๙]/.test(v))s++;if(v.length<6)s=Math.min(s,1);s=v?Math.max(s,1):0;
+const L=['','อ่อน','พอใช้','ดี','แข็งแรง'],C=['','#ff6b78','#ffb454','#7ed957','#34d399'],i=document.getElementById('mi');i.style.width=s*25+'%';i.style.background=C[s];document.getElementById('ml').textContent=s?'รหัสผ่าน'+L[s]:'ความแข็งแรงของรหัสผ่าน'}
+async function loginGo(){const up=LM=='up',b=document.getElementById('lc'),lbl=b.textContent,n=document.getElementById('lu').value.trim(),pw=document.getElementById('lp').value,q=up?document.getElementById('lq').value:'';
+const er=m=>{document.getElementById('le').textContent=m;b.disabled=false;b.textContent=lbl;return 0};
+if(!/^[\w.\-ก-๙]{2,20}$/.test(n))return er('ชื่อผู้ใช้ 2-20 ตัว ใช้ตัวอักษร ตัวเลข _ . - ได้ (ห้ามเว้นวรรค)');
+if(up&&pw.length<6)return er('รหัสผ่านต้องมีอย่างน้อย 6 ตัว');if(!up&&!pw)return er('กรุณากรอกรหัสผ่าน');if(up&&pw!==q)return er('รหัสผ่านทั้งสองช่องไม่ตรงกัน');
+b.disabled=true;b.textContent='กำลังตรวจสอบ...';
+try{const h=await sha(n.toLowerCase()+':'+pw);
+if(CL()){const d=await cget(n),ex=d&&d.h;
+if(up){if(ex)return er('ชื่อนี้ถูกใช้แล้ว ลองชื่ออื่น หรือสลับไปแท็บเข้าสู่ระบบ');U={n,e:'บันทึกขึ้นเว็บแล้ว',h};sv('bgu',U);await cput(n,{n,h,p:P,t:Date.now()});toast('สร้างบัญชีสำเร็จ')}
+else{if(!ex)return er('ไม่พบบัญชีนี้ ลองสมัครสมาชิกก่อน');if(d.h!==h)return er('รหัสผ่านไม่ถูกต้อง');P=Object.assign(DP(),d.p||{});if(P.day!==today()){P.day=today();P.dayAns=0}U={n:d.n||n,e:'บันทึกขึ้นเว็บแล้ว',h};sv('bgu',U);sv('bgp',P);toast('ยินดีต้อนรับกลับ '+U.n)}}
+else{const acc=ld('bga',{}),k=n.toLowerCase(),ex=acc[k];
+if(up){if(ex)return er('ชื่อนี้ถูกใช้แล้วในเครื่องนี้');acc[k]={n,h,p:P};sv('bga',acc);toast('สร้างบัญชีสำเร็จ')}
+else{if(!ex)return er('ไม่พบบัญชีนี้ในเครื่องนี้ ลองสมัครสมาชิกก่อน');if(ex.h!==h)return er('รหัสผ่านไม่ถูกต้อง');P=Object.assign(DP(),ex.p||{});toast('ยินดีต้อนรับกลับ '+ex.n)}
+U={n:acc[k].n,e:'บันทึกในเครื่องนี้',h:''};sv('bgu',U);sv('bgp',P)}
+home(1)}catch(e){er('เชื่อมต่อเว็บเซิร์ฟเวอร์ไม่ได้ ตรวจ URL ในตั้งค่า และกฎของ database ('+(e.message||'')+')')}}
+if(U&&U.h&&CL())cget(U.n).then(d=>{if(d&&d.h===U.h&&d.p&&d.p.xp>P.xp){P=Object.assign(P,d.p);sv('bgp',P)}}).catch(()=>{});
+/* ---------- Google / Apple ผ่าน Firebase Authentication ---------- */
+const GG='<svg width="22" height="22" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.600 0 6.500 5.400 2.600 13.200l7.900 6.100C12.400 13.600 17.700 9.500 24 9.500z"/><path fill="#4285F4" d="M46.500 24.500c0-1.600-.1-3.100-.4-4.500H24v9h12.700c-.6 3-2.300 5.500-4.800 7.200l7.500 5.800c4.400-4.100 7.100-10.100 7.100-17.500z"/><path fill="#FBBC05" d="M10.500 28.700c-.5-1.400-.8-3-.8-4.700s.3-3.200.8-4.700l-7.900-6.100C.9 16.600 0 20.200 0 24s.9 7.400 2.600 10.800l7.900-6.100z"/><path fill="#34A853" d="M24 48c6.500 0 11.900-2.100 15.900-5.800l-7.500-5.800c-2.200 1.500-5 2.300-8.400 2.300-6.300 0-11.600-4.100-13.500-9.800l-7.900 6.100C6.500 42.600 14.600 48 24 48z"/></svg>';
+const AP='<svg width="20" height="20" viewBox="0 0 24 24"><path d="M16.400 12.700c0-2.300 1.900-3.400 2-3.400-1.100-1.600-2.800-1.800-3.400-1.800-1.400-.1-2.800.8-3.500.8s-1.800-.8-3-.8c-1.500 0-3 .9-3.800 2.300-1.600 2.800-.4 7 1.200 9.300.8 1.100 1.700 2.400 2.900 2.300 1.200 0 1.600-.7 3-.7s1.800.7 3 .7 2-1.100 2.800-2.200c.9-1.300 1.200-2.500 1.300-2.600-.1 0-2.500-1-2.500-3.800zM14.100 5.900c.6-.8 1.100-1.900.9-3-.9 0-2.100.6-2.700 1.400-.6.700-1.100 1.800-1 2.900 1.100.1 2.200-.5 2.800-1.300z"/></svg>';
+const DP=()=>({xp:0,streak:0,last:'',played:0,right:0,ans:0,best:{},day:'',dayAns:0,subs:{},perfect:0,maxCombo:0,bd:[]});
+const FBC=()=>ld('bgf',null);
+let FBP=null;
+function loadFB(){if(FBP)return FBP;const c=FBC();
+FBP=new Promise((ok,no)=>{if(!c||!c.apiKey||!c.authDomain)return no(new Error('ยังไม่ได้ตั้งค่า Firebase (ตั้งค่า → Google / Apple Login)'));
+const L=['app','auth','database'];let i=0;
+(function nx(){if(i>=L.length){try{if(!firebase.apps.length){const cfg=Object.assign({},c);if(!cfg.databaseURL&&CL())cfg.databaseURL=CL();firebase.initializeApp(cfg)}ok(firebase)}catch(e){no(e)}return}
+const s=document.createElement('script');s.src='https://www.gstatic.com/firebasejs/10.12.2/firebase-'+L[i++]+'-compat.js';s.onload=nx;s.onerror=()=>no(new Error('โหลด Firebase ไม่ได้ ตรวจอินเทอร์เน็ต'));document.head.appendChild(s)})()});
+FBP.catch(()=>{FBP=null});return FBP}
+function fbErr(e){const c=e&&e.code||'';return c=='auth/unauthorized-domain'?'โดเมนนี้ยังไม่ได้อนุญาต: Firebase → Authentication → Settings → Authorized domains':c=='auth/operation-not-allowed'?'ยังไม่ได้เปิดผู้ให้บริการนี้ใน Firebase → Authentication → Sign-in method':c=='auth/popup-closed-by-user'||c=='auth/cancelled-popup-request'?'ปิดหน้าต่างล็อกอินก่อนเสร็จ':c=='auth/operation-not-supported-in-this-environment'?'ต้องเปิดผ่านเว็บ https:// หรือ localhost (ไม่ใช่ไฟล์ในเครื่อง)':(e&&e.message)||'ล็อกอินไม่สำเร็จ'}
+async function socialIn(p){try{const f=await loadFB(),a=f.auth(),pr=p=='Google'?new f.auth.GoogleAuthProvider():new f.auth.OAuthProvider('apple.com');
+if(p=='Apple'){pr.addScope('email');pr.addScope('name')}
+let r;try{r=await a.signInWithPopup(pr)}catch(e){if(e.code=='auth/popup-blocked'){await a.signInWithRedirect(pr);return}throw e}
+await fbAfter(r.user,p)}catch(e){loginScreen(fbErr(e))}}
+async function fbAfter(u,p){U={n:u.displayName||(u.email||'').split('@')[0]||'ผู้เล่น',e:(u.email||p||'บัญชีออนไลน์')+' · บันทึกขึ้นเว็บแล้ว',uid:u.uid,fb:1,h:''};sv('bgu',U);
+try{const d=(await firebase.database().ref('accounts/'+u.uid+'/p').get()).val();
+if(d&&d.xp>=P.xp){P=Object.assign(DP(),d);if(P.day!==today()){P.day=today();P.dayAns=0}sv('bgp',P);toast('ยินดีต้อนรับกลับ '+U.n)}else{await firebase.database().ref('accounts/'+u.uid).set({n:U.n,p:P,t:Date.now()});toast('บันทึกข้อมูลขึ้นเว็บแล้ว')}}
+catch(e){toast('เข้าสู่ระบบแล้ว แต่เชื่อมฐานข้อมูลไม่ได้: '+((e.code||e.message||'')+'').slice(0,40))}
+home(1)}
+function fbSave(){if(!window.firebase||!firebase.apps.length||!U||!U.uid)return;firebase.database().ref('accounts/'+U.uid).set({n:U.n,p:P,t:Date.now()}).catch(()=>toast('ซิงค์ขึ้นเว็บไม่สำเร็จ ข้อมูลยังอยู่ในเครื่อง'))}
+function parseFB(t){const o={};[...t.matchAll(/["']?(apiKey|authDomain|databaseURL|projectId|appId|storageBucket|messagingSenderId)["']?\s*:\s*["']([^"']+)["']/g)].forEach(m=>o[m[1]]=m[2]);return o}
+function saveFB(){const t=document.getElementById('fc').value.trim();if(!t){try{localStorage.removeItem('bgf')}catch(e){}document.getElementById('sh').remove();return toast('ลบการตั้งค่า Firebase แล้ว')}
+const o=parseFB(t);if(!o.apiKey||!o.authDomain)return toast('ไม่พบ apiKey / authDomain ในข้อความที่วาง');sv('bgf',o);FBP=null;document.getElementById('sh').remove();toast('บันทึกแล้ว ไปกดล็อกอินด้วย Google หรือ Apple ได้เลย')}
+if(FBC()&&location.protocol!='file:')loadFB().then(f=>f.auth().getRedirectResult()).then(r=>{if(r&&r.user)fbAfter(r.user,r.additionalUserInfo&&r.additionalUserInfo.providerId)}).catch(()=>{});
+start();
+</script></body></html>
